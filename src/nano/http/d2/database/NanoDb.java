@@ -23,19 +23,19 @@ public class NanoDb<K, V> {
     private long lastSave = System.currentTimeMillis();
     private int operations = 0;
 
-    public NanoDb(String datafile) throws Exception {
-        this(datafile, 60000L, 10, null);
+    public NanoDb(String datafile, ClassLoader context) throws Exception {
+        this(datafile, 60000L, 10, null, context);
     }
 
-    public NanoDb(String datafile, long saveInterval, int bufferSize) throws Exception {
-        this(datafile, saveInterval, bufferSize, null);
+    public NanoDb(String datafile, long saveInterval, int bufferSize, ClassLoader context) throws Exception {
+        this(datafile, saveInterval, bufferSize, null, context);
     }
 
-    public NanoDb(String datafile, Class<?> classV) throws Exception {
-        this(datafile, 60000L, 10, classV);
+    public NanoDb(String datafile, Class<?> classV, ClassLoader context) throws Exception {
+        this(datafile, 60000L, 10, classV, context);
     }
 
-    public NanoDb(String datafile, long saveInterval, int bufferSize, Class<?> classV) throws Exception {
+    public NanoDb(String datafile, long saveInterval, int bufferSize, Class<?> classV, ClassLoader context) throws Exception {
         save = saveInterval;
         buffer = bufferSize;
         file = datafile;
@@ -45,7 +45,7 @@ public class NanoDb<K, V> {
         if (!new File(file).exists()) {
             data = new ConcurrentHashMap<>();
         } else {
-            data = provider.fromFile(datafile, classV);
+            data = provider.fromFile(datafile, classV, context);
         }
     }
 

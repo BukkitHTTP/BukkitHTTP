@@ -4,10 +4,7 @@ import nano.http.d2.console.Console;
 import nano.http.d2.console.Logger;
 import nano.http.d2.database.Transfer;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,10 +27,19 @@ public class MapSerl<K, V> {
     }
 
     @SuppressWarnings("unchecked")
-    public ConcurrentHashMap<K, V> fromFile(String f, Class<?> clazz) throws Exception {
+    public ConcurrentHashMap<K, V> fromFile(String f, Class<?> clazz, ClassLoader context) throws Exception {
         boolean changed = false;
         ConcurrentHashMap<K, V> map = new ConcurrentHashMap<>();
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f)) {
+            @Override
+            protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+                try {
+                    return context.loadClass(desc.getName());
+                } catch (ClassNotFoundException e) {
+                    return super.resolveClass(desc);
+                }
+            }
+        };
         SerlItem item = (SerlItem) ois.readObject();
         for (int i = 0; i < item.key.length; i++) {
             if (clazz != null) {

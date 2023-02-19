@@ -45,9 +45,8 @@ public class Router implements ServeProvider {
         return true;
     }
 
-    public boolean clear() {
+    public void clear() {
         nodes.clear();
-        return true;
     }
 
     public boolean remove(String path) {
@@ -62,8 +61,8 @@ public class Router implements ServeProvider {
 }
 
 class Node {
-    public String uri;
-    public ServeProvider sp;
+    public final String uri;
+    public final ServeProvider sp;
 
     public Node(String uri, ServeProvider sp) {
         this.uri = uri;

@@ -15,20 +15,20 @@ public class Response {
     /**
      * HTTP status code after processing, e.g. "200 OK", HTTP_OK
      */
-    public String status;
+    public final String status;
     /**
      * MIME type of content, e.g. "text/html"
      */
-    public String mimeType;
+    public final String mimeType;
     /**
      * Data of the response, may be null.
      */
-    public InputStream data;
+    public final InputStream data;
     /**
      * Headers for the HTTP response. Use addHeader()
      * to add lines.
      */
-    public Properties header = new Properties();
+    public final Properties header = new Properties();
 
     /**
      * Basic constructor.

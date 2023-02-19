@@ -21,19 +21,19 @@ import nano.http.d2.hooks.interfaces.SocketHookProvider;
  */
 
 public class HookManager {
-    public static RequestHookProvider requestHook = new DefaultRequest();
+    public static final RequestHookProvider requestHook = new DefaultRequest();
     // This hook is called before the request is processed by the ServeProvider.
     // It can be used to authenticate the request, or work as a WAF.
 
-    public static HeaderHookProvider headerHook = new DefaultHeader();
+    public static final HeaderHookProvider headerHook = new DefaultHeader();
     // This hook is called when a response is just created.
     // It can be used to add headers to the response.
 
-    public static SocketHookProvider socketHook = new DefaultSock();
+    public static final SocketHookProvider socketHook = new DefaultSock();
     // This hook is called when a socket is just created.
     // It can be used to work as a firewall, as the default implementation is.
 
-    public static FileHookProvider fileHook = new DefaultFile();
+    public static final FileHookProvider fileHook = new DefaultFile();
     // This hook is called when a file is about to be uploaded.
     // By default, we allow files to be uploaded only if the uri ends with upload.html.
     // You may also make use of this hook to disable file uploads.

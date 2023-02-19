@@ -2,6 +2,8 @@ package nano.http.bukkit.internal;
 
 import nano.http.bukkit.api.BukkitServerProvider;
 import nano.http.d2.console.Logger;
+import nano.http.d2.consts.Mime;
+import nano.http.d2.consts.Status;
 import nano.http.d2.core.Response;
 
 import java.io.File;
@@ -42,7 +44,7 @@ public class Bukkit_Node {
             return (Response) serve.invoke(serverProvider, uri, method, header, parms, files);
         } catch (Exception e) {
             Logger.error("Error while serving request.", e);
-            return null;
+            return new Response(Status.HTTP_INTERNALERROR, Mime.MIME_PLAINTEXT, "Error: " + e);
         }
     }
 

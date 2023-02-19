@@ -4,8 +4,8 @@ import java.io.Serializable;
 
 class SerlItem implements Serializable {
     private static final long serialVersionUID = 11451419196666L;
-    public Object[] key;
-    public Object[] value;
+    public final Object[] key;
+    public final Object[] value;
 
     protected SerlItem(Object[] k, Object[] v) {
         key = k;
