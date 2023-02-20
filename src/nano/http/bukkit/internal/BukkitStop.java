@@ -13,9 +13,12 @@ public class BukkitStop implements Runnable {
         isStopping = true;
         Main.server.stop();
         Logger.info("Stopping BukkitHTTP Server...");
+        int count = Main.router.nodes.size();
+        int now = 1;
         for (Bukkit_Node node : Main.router.nodes) {
             try {
                 node.onDisable();
+                Logger.info("[ " + now++ + " / " + count + " ]");
             } catch (Exception e) {
                 Logger.error("Error while disabling plugin " + node.name + " , ignoring!", e);
             }
@@ -24,7 +27,6 @@ public class BukkitStop implements Runnable {
 
     @Override
     public void run() {
-        doStop();
         System.exit(0);
     }
 }

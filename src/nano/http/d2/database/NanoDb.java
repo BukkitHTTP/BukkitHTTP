@@ -120,7 +120,22 @@ public class NanoDb<K, V> {
                 File original = new File(file);
                 File temp = new File(file + "_");
                 original.delete();
-                temp.renameTo(original);
+
+                // BSD's FS is INSANE!
+                // Do not change this loop thing or enjoy your data loss!
+                // Fxxk you, BSD!
+                File observer = new File(file);
+                //noinspection ConditionalBreakInInfiniteLoop
+                while (true) {
+                    temp.renameTo(original);
+                    try {
+                        Thread.sleep(1L);
+                    } catch (Exception ignored) {
+                    }
+                    if (observer.exists()) {
+                        break;
+                    }
+                }
             } catch (Exception e) {
                 Logger.error("Failed to save database", e);
             }

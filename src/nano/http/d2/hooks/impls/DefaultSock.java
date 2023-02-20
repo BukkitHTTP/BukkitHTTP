@@ -35,7 +35,7 @@ public class DefaultSock implements SocketHookProvider {
             map.remove(ip);
             Con block = new Con();
             block.expire = System.currentTimeMillis() + 2 * 60 * 60 * 1000L;   // 2 hours
-            blackList.put(ip, con);
+            blackList.put(ip, block);
             return false;
         }
         map.put(ip, con);
