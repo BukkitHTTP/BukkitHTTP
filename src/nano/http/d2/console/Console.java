@@ -25,6 +25,18 @@ public class Console {
             Logger.info("Available commands:");
             StringBuilder sb = new StringBuilder();
             for (String s : commands.keySet()) {
+                if (s.charAt(0) != '_') {
+                    sb.append(s).append(", ");
+                }
+            }
+            sb.delete(sb.length() - 2, sb.length());
+            Logger.info(sb.toString());
+        });
+        // Commands that are not meant to be used by the user should be prefixed with an underscore.
+        commands.put("_help", () -> {
+            Logger.info("Available commands (!):");
+            StringBuilder sb = new StringBuilder();
+            for (String s : commands.keySet()) {
                 sb.append(s).append(", ");
             }
             sb.delete(sb.length() - 2, sb.length());

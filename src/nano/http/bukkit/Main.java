@@ -1,5 +1,6 @@
 package nano.http.bukkit;
 
+import nano.http.bukkit.cipher.BukkitCipher;
 import nano.http.bukkit.internal.*;
 import nano.http.d2.console.Console;
 import nano.http.d2.console.Logger;
@@ -11,7 +12,7 @@ import java.io.FileWriter;
 import java.util.Properties;
 
 public class Main {
-    public static final String VERSION = "1.0.1 (Pro)";
+    public static final String VERSION = "1.0.2 Pre1 (Pro)";
     public static final Bukkit_Router router = new Bukkit_Router();
     public static NanoHTTPd server;
 
@@ -46,6 +47,10 @@ public class Main {
         Console.register("load", new BukkitLoad());
         Console.register("unload", new BukkitUnload());
         Console.register("pl", new BukkitPlugins());
+        //noinspection ConstantValue
+        if (Main.VERSION.contains("Pro")) {
+            Console.register("_cipher", new BukkitCipher());
+        }
         Runtime.getRuntime().addShutdownHook(new Thread(BukkitStop::doStop));
         server = new NanoHTTPd(port, router);
     }

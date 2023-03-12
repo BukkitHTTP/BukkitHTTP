@@ -13,13 +13,11 @@ public class CipheredClassLoader extends ClassLoader {
     public CipheredClassLoader(byte[] key, File xar) throws IOException {
         super(CipheredClassLoader.class.getClassLoader());
         this.key = key;
-        // this.key[0] ^= (byte) 0x01;
-        // Anything alike this will do the trick. Make your own crypto UNIQUE!
         jar = new JarFile(xar);
         entries = jar.entries();
     }
 
-    private static byte[] readAllBytes(InputStream is) throws IOException {
+    public static byte[] readAllBytes(InputStream is) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
         int bytesRead;
@@ -27,6 +25,17 @@ public class CipheredClassLoader extends ClassLoader {
             baos.write(buffer, 0, bytesRead);
         }
         return baos.toByteArray();
+    }
+
+    public static void decrypt(byte[] bytes, byte[] key) {
+        for (int i = 0; i < bytes.length; i++) {
+            if (i % 10 == 0) {
+                bytes[i] ^= (byte) 0x05;
+                // Or anything else. Just don't leave it unmodified. Or see cracks fly. 
+                // What? Why I leave it undocumented? Why don't you open your source?
+            }
+            bytes[i] ^= key[i % key.length];
+        }
     }
 
     @Override
@@ -37,7 +46,7 @@ public class CipheredClassLoader extends ClassLoader {
             if (entry != null) {
                 byte[] bytes = readAllBytes(jar.getInputStream(entry));
                 if (bytes[0] != (byte) 0xCA || bytes[1] != (byte) 0xFE || bytes[2] != (byte) 0xBA || bytes[3] != (byte) 0xBE) {
-                    bytes = decrypt(bytes, key);
+                    decrypt(bytes, key);
                 }
                 return defineClass(name, bytes, 0, bytes.length);
             }
@@ -53,7 +62,7 @@ public class CipheredClassLoader extends ClassLoader {
         if (entry != null) {
             try {
                 byte[] bytes = readAllBytes(jar.getInputStream(entry));
-                bytes = decrypt(bytes, key);
+                decrypt(bytes, key);
                 return new ByteArrayInputStream(bytes);
             } catch (IOException e) {
                 return null;
@@ -65,13 +74,5 @@ public class CipheredClassLoader extends ClassLoader {
 
     public void close() throws IOException {
         jar.close();
-    }
-
-    private byte[] decrypt(byte[] bytes, byte[] key) {
-        byte[] decrypted = new byte[bytes.length];
-        for (int i = 0; i < bytes.length; i++) {
-            decrypted[i] = (byte) (bytes[i] ^ key[i % key.length]);
-        }
-        return decrypted;
     }
 }

@@ -2,6 +2,7 @@ package nano.http.bukkit.internal;
 
 import nano.http.bukkit.Main;
 import nano.http.bukkit.cipher.CipheredClassLoader;
+import nano.http.d2.console.Console;
 import nano.http.d2.console.Logger;
 import nano.http.d2.consts.Mime;
 import nano.http.d2.consts.Status;
@@ -22,6 +23,7 @@ public class Bukkit_Router implements ServeProvider {
     public final List<Bukkit_Node> nodes = new ArrayList<>();
 
     public void load(File dir) {
+        Logger.info("Loading plugin from " + dir.getName() + "...");
         try {
             if (!dir.exists()) {
                 throw new FileNotFoundException("Directory not found.");
@@ -54,7 +56,14 @@ public class Bukkit_Router implements ServeProvider {
                 if (!xar.exists()) {
                     throw new FileNotFoundException("Jar not found.");
                 }
-                ClassLoader cpcl = new CipheredClassLoader(pr.getProperty("cipher").getBytes(StandardCharsets.UTF_8), xar);
+                String pswd = pr.getProperty("cipher");
+                if (pswd.equalsIgnoreCase("input")) {
+                    Logger.info("Plugin " + pr.getProperty("name") + " requires a password to load.");
+                    Logger.info("Please input the password :");
+                    pswd = Console.await();
+                }
+                assert pswd != null;
+                ClassLoader cpcl = new CipheredClassLoader(pswd.getBytes(StandardCharsets.UTF_8), xar);
                 addNode(pr.getProperty("uri"), cpcl, pr.getProperty("main"), pr.getProperty("name"), dir);
                 Logger.info("Plugin " + pr.getProperty("name") + " loaded successfully. (!Ciphered!)");
             } else {
