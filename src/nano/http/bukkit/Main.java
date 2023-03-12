@@ -11,7 +11,7 @@ import java.io.FileWriter;
 import java.util.Properties;
 
 public class Main {
-    public static final String VERSION = "1.0.0r";
+    public static final String VERSION = "1.0.1 (Pro)";
     public static final Bukkit_Router router = new Bukkit_Router();
     public static NanoHTTPd server;
 

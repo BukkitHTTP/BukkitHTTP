@@ -37,11 +37,11 @@ public Response fallback(String uri,String method,Properties header,Properties p
 - onEnable：当模块被加载时调用。您应该在这里初始化您的模块。
   尽可能避免在构造函数中进行初始化，或者使用static块。
   您可以保存name,dir,uri这三个参数，以便在后续的方法中使用。
-  - name指的是模块名称。您可以基于此创建指令等。
-  - dir指的是模块的文件夹路径。
-    - 我们推荐您将您模块的全部资源放在本文件夹内。
-    - 我们推荐您将配置文件命名为config.properties。
-  - uri指的是用户为当前模块分配的路由。
+    - name指的是模块名称。您可以基于此创建指令等。
+    - dir指的是模块的文件夹路径。
+        - 我们推荐您将您模块的全部资源放在本文件夹内。
+        - 我们推荐您将配置文件命名为config.properties。
+    - uri指的是用户为当前模块分配的路由。
 - onDisable：当模块被卸载时调用。您应该在这里保存您的数据。
   请不要忘记关闭您的线程，还原您的Hook，反注册您的命令（如果有）。
   > BukkitHTTP最大的使命之一就是解决很多基于Java的HTTP框架不能实现热重载的问题。  
@@ -49,8 +49,9 @@ public Response fallback(String uri,String method,Properties header,Properties p
 - serve：当用户访问当前模块的路由时调用。您应该在这里处理用户的请求。
     - 如果返回null，BukkitHTTP将会认为您拒绝了路由，从而触发请求落回。
 - fallback：当用户访问不存在的路由时调用。
-  - 如果返回null，BukkitHTTP将会认为您拒绝处理这个落回问询，从而问询下一个插件。
-  - 如果返回Response，BukkitHTTP将会中止落回问询，并且返回您给出的Response。
+    - 如果返回null，BukkitHTTP将会认为您拒绝处理这个落回问询，从而问询下一个插件。
+    - 如果返回Response，BukkitHTTP将会中止落回问询，并且返回您给出的Response。
 
 #### 4 - 打包，发布。
+
 按照模块的定义完成即可。

@@ -1,5 +1,7 @@
 package nano.http.bukkit.internal;
 
+import nano.http.bukkit.Main;
+import nano.http.bukkit.cipher.CipheredClassLoader;
 import nano.http.d2.console.Logger;
 import nano.http.d2.consts.Mime;
 import nano.http.d2.consts.Status;
@@ -11,6 +13,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -45,14 +48,24 @@ public class Bukkit_Router implements ServeProvider {
             if (!pr.containsKey("name")) {
                 throw new UnsupportedOperationException("plugin.properties does not contain name.");
             }
-
-            File jar = new File(dir, pr.getProperty("jar"));
-            if (!jar.exists()) {
-                throw new FileNotFoundException("Jar not found.");
+            //noinspection ConstantValue
+            if (pr.containsKey("cipher") && Main.VERSION.contains("Pro")) {
+                File xar = new File(dir, pr.getProperty("jar"));
+                if (!xar.exists()) {
+                    throw new FileNotFoundException("Jar not found.");
+                }
+                ClassLoader cpcl = new CipheredClassLoader(pr.getProperty("cipher").getBytes(StandardCharsets.UTF_8), xar);
+                addNode(pr.getProperty("uri"), cpcl, pr.getProperty("main"), pr.getProperty("name"), dir);
+                Logger.info("Plugin " + pr.getProperty("name") + " loaded successfully. (!Ciphered!)");
+            } else {
+                File jar = new File(dir, pr.getProperty("jar"));
+                if (!jar.exists()) {
+                    throw new FileNotFoundException("Jar not found.");
+                }
+                ClassLoader pcl = new URLClassLoader(new URL[]{jar.toURI().toURL()});
+                addNode(pr.getProperty("uri"), pcl, pr.getProperty("main"), pr.getProperty("name"), dir);
+                Logger.info("Plugin " + pr.getProperty("name") + " loaded successfully.");
             }
-            ClassLoader pcl = new URLClassLoader(new URL[]{jar.toURI().toURL()});
-            addNode(pr.getProperty("uri"), pcl, pr.getProperty("main"), pr.getProperty("name"), dir);
-            Logger.info("Plugin " + pr.getProperty("name") + " loaded successfully.");
         } catch (Exception e) {
             Logger.error("Plugin loaded unsuccessfully due to an exception.", e);
         }
@@ -120,6 +133,8 @@ public class Bukkit_Router implements ServeProvider {
                 try {
                     if (node.classLoader instanceof URLClassLoader) {
                         ((URLClassLoader) node.classLoader).close();
+                    } else if (node.classLoader instanceof CipheredClassLoader) {
+                        ((CipheredClassLoader) node.classLoader).close();
                     }
                 } catch (Exception e) {
                     Logger.error("Error while closing plugin classloader. Enforcing un-registration.", e);
@@ -132,4 +147,3 @@ public class Bukkit_Router implements ServeProvider {
         return false;
     }
 }
-

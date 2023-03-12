@@ -10,9 +10,9 @@ public class BukkitUnload implements Runnable {
         Logger.info("Input the name of the plugin you want to unload.");
         String name = Console.await();
         if (Main.router.removeNode(name)) {
-            Logger.info("Plugin unloaded successfully.");
+            Logger.info("Plugin unloaded.");
         } else {
-            Logger.info("Plugin unloaded unsuccessfully.");
+            Logger.info("Plugin not found.");
         }
     }
 }

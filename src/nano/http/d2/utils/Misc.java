@@ -33,6 +33,7 @@ public class Misc {
         theMimeTypes.put("jpg", "image/jpeg");
         theMimeTypes.put("jpeg", "image/jpeg");
         theMimeTypes.put("png", "image/png");
+        theMimeTypes.put("bmp", "image/bmp");
         theMimeTypes.put("mp3", "audio/mpeg");
         theMimeTypes.put("m3u", "audio/mpeg-url");
         theMimeTypes.put("pdf", "application/pdf");
