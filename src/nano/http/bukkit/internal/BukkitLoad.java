@@ -10,7 +10,7 @@ public class BukkitLoad implements Runnable {
     @SuppressWarnings("DataFlowIssue")
     @Override
     public void run() {
-        Logger.info("Input the path of the plugin you want to unload.");
+        Logger.info("Input the path of the plugin you want to load.");
         String name = Console.await();
         Main.router.load(new File(new File("plugins"), name));
     }
