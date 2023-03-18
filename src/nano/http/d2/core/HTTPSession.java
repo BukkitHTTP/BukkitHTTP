@@ -158,7 +158,7 @@ public class HTTPSession implements Runnable {
             if (r == null) {
                 sendError(Status.HTTP_INTERNALERROR, "SERVER INTERNAL ERROR: Serve() returned a null response.");
             } else {
-                if (!header.containsKey("cookie") || !header.getProperty("cookie").contains("session=" + SessionManager.unusedSessionName())) {
+                if (!header.containsKey("cookie") || !header.getProperty("cookie").contains("session=")) {
                     r.addHeader("Set-Cookie", "session=" + SessionManager.unusedSessionName());
                 }
                 sendResponse(r.status, r.mimeType, r.header, r.data);
