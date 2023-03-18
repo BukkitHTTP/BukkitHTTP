@@ -7,14 +7,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DefaultSock implements SocketHookProvider {
-    private final Map<String, Con> map = new HashMap<>();
-    private final Map<String, Con> blackList = new HashMap<>();
+    private final Map<String, Conn> map = new HashMap<>();
+    private final Map<String, Conn> blackList = new HashMap<>();
 
     @Override
     public boolean Accept(String ip) {
         if (blackList.containsKey(ip)) {
-            Con con = blackList.get(ip);
-            if (con.expire < System.currentTimeMillis()) {
+            Conn conn = blackList.get(ip);
+            if (conn.expire < System.currentTimeMillis()) {
                 blackList.remove(ip);
                 Logger.warning("IP " + ip + " has been unblocked by the NanoFirewall.");
                 return true;
@@ -22,28 +22,28 @@ public class DefaultSock implements SocketHookProvider {
             return false;
         }
         if (!map.containsKey(ip)) {
-            map.put(ip, new Con());
+            map.put(ip, new Conn());
         }
-        Con con = map.get(ip);
-        if (con.expire < System.currentTimeMillis()) {
+        Conn conn = map.get(ip);
+        if (conn.expire < System.currentTimeMillis()) {
             map.remove(ip);
             return true;
         }
-        con.count++;
-        if (con.count > 15) {
+        conn.count++;
+        if (conn.count > 15) {
             Logger.warning("IP " + ip + " has been blocked by the NanoFirewall.");
             map.remove(ip);
-            Con block = new Con();
+            Conn block = new Conn();
             block.expire = System.currentTimeMillis() + 2 * 60 * 60 * 1000L;   // 2 hours
             blackList.put(ip, block);
             return false;
         }
-        map.put(ip, con);
+        map.put(ip, conn);
         return true;
     }
 }
 
-class Con {
+class Conn {
     long expire = System.currentTimeMillis() + 10000;
     int count = 1;
 }

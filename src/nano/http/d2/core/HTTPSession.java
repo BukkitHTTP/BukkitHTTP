@@ -5,6 +5,7 @@ import nano.http.d2.consts.Mime;
 import nano.http.d2.consts.Status;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.serve.ServeProvider;
+import nano.http.d2.session.SessionManager;
 import nano.http.d2.utils.Misc;
 
 import java.io.*;
@@ -153,20 +154,17 @@ public class HTTPSession implements Runnable {
             }
 
             // Ok, now do the serve()
-            Response r = HookManager.requestHook.serve(uri, method, header, parms, files, myServer);
+            Response r = HookManager.requestHook.serve(uri, method, header, parms, files, myServer, mySocket.getInetAddress().getHostAddress());
             if (r == null) {
                 sendError(Status.HTTP_INTERNALERROR, "SERVER INTERNAL ERROR: Serve() returned a null response.");
             } else {
+                if (!header.containsKey("cookie") || !header.getProperty("cookie").contains("session=" + SessionManager.unusedSessionName())) {
+                    r.addHeader("Set-Cookie", "session=" + SessionManager.unusedSessionName());
+                }
                 sendResponse(r.status, r.mimeType, r.header, r.data);
             }
-
             in.close();
             is.close();
-            if (method.equalsIgnoreCase("GET")) {
-                if (parms.getProperty("exit") != null) {
-                    System.exit(0);
-                }
-            }
         } catch (IOException ioe) {
             try {
                 sendError(Status.HTTP_INTERNALERROR, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());

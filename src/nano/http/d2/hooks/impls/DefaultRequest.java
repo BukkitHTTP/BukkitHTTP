@@ -10,7 +10,7 @@ import java.util.Properties;
 
 public class DefaultRequest implements RequestHookProvider {
     @Override
-    public Response serve(String uri, String method, Properties header, Properties parms, Properties files, ServeProvider sp) {
+    public Response serve(String uri, String method, Properties header, Properties parms, Properties files, ServeProvider sp, String ip) {
         if (method.equals("OPTIONS") || method.equals("HEAD")) {
             return new Response(Status.HTTP_NOCONTENT, Mime.MIME_PLAINTEXT, "Responded by : NanoHTTPd2");
         }
