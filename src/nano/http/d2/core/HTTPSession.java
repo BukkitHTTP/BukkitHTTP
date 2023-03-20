@@ -6,10 +6,12 @@ import nano.http.d2.consts.Status;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.serve.ServeProvider;
 import nano.http.d2.session.SessionManager;
+import nano.http.d2.utils.Encoding;
 import nano.http.d2.utils.Misc;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -47,7 +49,7 @@ public class HTTPSession implements Runnable {
 
             // Create a BufferedReader for parsing the header.
             ByteArrayInputStream hbis = new ByteArrayInputStream(buf, 0, rlen);
-            BufferedReader hin = new BufferedReader(new InputStreamReader(hbis));
+            BufferedReader hin = new BufferedReader(new InputStreamReader(hbis, StandardCharsets.UTF_8));
             Properties pre = new Properties();
             Properties parms = new Properties();
             Properties header = new Properties();
@@ -380,30 +382,10 @@ public class HTTPSession implements Runnable {
     /**
      * Decodes the percent encoding scheme. <br/>
      * For example: "an+example%20string" -> "an example string"
+     * Modified - added support for Chinese characters
      */
-    private String decodePercent(String str) throws InterruptedException {
-        try {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < str.length(); i++) {
-                char c = str.charAt(i);
-                switch (c) {
-                    case '+':
-                        sb.append(' ');
-                        break;
-                    case '%':
-                        sb.append((char) Integer.parseInt(str.substring(i + 1, i + 3), 16));
-                        i += 2;
-                        break;
-                    default:
-                        sb.append(c);
-                        break;
-                }
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            sendError(Status.HTTP_BADREQUEST, "BAD REQUEST: Bad percent-encoding.");
-            return null;
-        }
+    private String decodePercent(String str) {
+        return Encoding.deURL(str);
     }
 
     /**

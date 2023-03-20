@@ -1,6 +1,5 @@
 package nano.http.d2.session;
 
-import nano.http.d2.console.Logger;
 import nano.http.d2.consts.Mime;
 import nano.http.d2.consts.Status;
 import nano.http.d2.core.Response;

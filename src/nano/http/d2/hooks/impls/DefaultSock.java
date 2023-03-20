@@ -30,7 +30,7 @@ public class DefaultSock implements SocketHookProvider {
             return true;
         }
         conn.count++;
-        if (conn.count > 15) {
+        if (conn.count > 25) {
             Logger.warning("IP " + ip + " has been blocked by the NanoFirewall.");
             map.remove(ip);
             Conn block = new Conn();
