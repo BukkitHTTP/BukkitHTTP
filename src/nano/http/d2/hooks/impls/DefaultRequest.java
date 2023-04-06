@@ -5,7 +5,11 @@ import nano.http.d2.consts.Status;
 import nano.http.d2.core.Response;
 import nano.http.d2.hooks.interfaces.RequestHookProvider;
 import nano.http.d2.serve.ServeProvider;
+import nano.http.d2.session.Captcha;
+import nano.http.d2.session.Session;
+import nano.http.d2.session.SessionManager;
 
+import java.io.ByteArrayInputStream;
 import java.util.Properties;
 
 public class DefaultRequest implements RequestHookProvider {
@@ -19,6 +23,19 @@ public class DefaultRequest implements RequestHookProvider {
         }
         if (uri.equals("/favicon.ico")) {
             return new Response(Status.HTTP_OK, Mime.MIME_DEFAULT_BINARY, DefaultRequest.class.getResourceAsStream("/META-INF/favicon.ico"));
+        }
+        if (uri.equals("/captcha.jpg")) {
+            Session s = SessionManager.getSession(header);
+            if (s == null) {
+                return new Response(Status.HTTP_FORBIDDEN, Mime.MIME_PLAINTEXT, "Please Allow Cookies");
+            }
+            Object captcha = s.getAttribute("b_captcha");
+            if (captcha == null) {
+                captcha = Captcha.generateCaptcha();
+                s.setAttribute("b_captcha", captcha);
+            }
+            //noinspection DataFlowIssue
+            return new Response(Status.HTTP_OK, Mime.MIME_JPEG, new ByteArrayInputStream(Captcha.drawImage((String) captcha)));
         }
         return sp.serve(uri, method, header, parms, files);
     }

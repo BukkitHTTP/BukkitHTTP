@@ -11,5 +11,6 @@ public class Mime {
             MIME_HTML = "text/html",
             MIME_DEFAULT_BINARY = "application/octet-stream",
             MIME_XML = "text/xml",
+            MIME_JPEG = "image/jpeg",
             MIME_JSON = "application/json";
 }
