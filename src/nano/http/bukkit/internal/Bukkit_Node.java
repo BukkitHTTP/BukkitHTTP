@@ -20,7 +20,7 @@ public class Bukkit_Node {
     final Method fallback;
     final String name;
 
-    Bukkit_Node(String uri, ClassLoader classLoader, String classPath, String name) throws Exception {
+    public Bukkit_Node(String uri, ClassLoader classLoader, String classPath, String name) throws Exception {
         this.uri = uri;
         this.classLoader = classLoader;
         this.serverProvider = (BukkitServerProvider) classLoader.loadClass(classPath).getConstructor().newInstance();

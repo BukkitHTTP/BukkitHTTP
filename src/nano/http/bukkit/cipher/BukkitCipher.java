@@ -31,7 +31,7 @@ public class BukkitCipher implements Runnable {
                 CipheredClassLoader.decrypt(data, password);
                 if (data.length > 4) {
                     if (data[0] == (byte) 0xCA && data[1] == (byte) 0xFE && data[2] == (byte) 0xBA && data[3] == (byte) 0xBE) {
-                        // You're not cracking the jar file, not at least without modifying the source code. :P
+                        // You're not cracking with this, not at least without modifying the source code. :P
                         data = new byte[data.length];
                     }
                 }

@@ -400,7 +400,10 @@ public class HTTPSession implements Runnable {
         if (parms == null) {
             return;
         }
-
+        if (parms.startsWith("{")) {
+            p.put("json", parms);
+            return;
+        }
         StringTokenizer st = new StringTokenizer(parms, "&");
         while (st.hasMoreTokens()) {
             String e = st.nextToken();
