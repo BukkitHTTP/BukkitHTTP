@@ -11,8 +11,8 @@ public class NanoHTTPd {
     private final Thread myThread;
     private final ServerSocket myServerSocket;
 
-    public NanoHTTPd(int port, ServeProvider server) throws IOException {
-        myServerSocket = new ServerSocket(port);
+    public NanoHTTPd(int port, ServeProvider server) throws Exception {
+        myServerSocket = SocketFactory.createServerSocket(port);
         myThread = new Thread(() -> {
             try {
                 while (true) {

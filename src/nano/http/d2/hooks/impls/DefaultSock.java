@@ -7,8 +7,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DefaultSock implements SocketHookProvider {
-    private final Map<String, Conn> map = new HashMap<>();
+    static final Map<String, Conn> map = new HashMap<>();
     private final Map<String, Conn> blackList = new HashMap<>();
+
+    public static void strike(String ip, int weight) {
+        if (!map.containsKey(ip)) {
+            map.put(ip, new Conn());
+        }
+        Conn conn = map.get(ip);
+        if (conn.expire < System.currentTimeMillis()) {
+            conn = new Conn();
+        }
+        conn.count += weight;
+        map.put(ip, conn);
+    }
 
     @Override
     public boolean Accept(String ip) {

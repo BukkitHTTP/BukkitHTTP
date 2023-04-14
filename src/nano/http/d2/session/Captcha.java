@@ -1,11 +1,14 @@
 package nano.http.d2.session;
 
+import nano.http.d2.console.Logger;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.util.Random;
 
+@SuppressWarnings("unused")
 public class Captcha {
     private static final Random rdm = new Random();
     @SuppressWarnings("SpellCheckingInspection")
@@ -19,7 +22,8 @@ public class Captcha {
             definedFont = Font.createFont(Font.TRUETYPE_FONT, Captcha.class.getResourceAsStream("/META-INF/text.ttf")).deriveFont((float) 30);
             //[Font: https://699pic.com/subject/gongyiziti.html] [License granted by 699pic.com | Commercial use allowed | Modification disallowed]
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            Logger.info("Failed to load font. Using default font.");
+            definedFont = new Font(new BufferedImage(1, 1, 1).getGraphics().getFont().getName(), Font.PLAIN, 30);
         }
     }
 

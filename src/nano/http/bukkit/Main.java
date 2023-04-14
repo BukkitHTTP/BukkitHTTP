@@ -5,6 +5,8 @@ import nano.http.bukkit.internal.*;
 import nano.http.d2.console.Console;
 import nano.http.d2.console.Logger;
 import nano.http.d2.core.NanoHTTPd;
+import nano.http.d2.hooks.HookManager;
+import nano.http.d2.hooks.impls.EmptySock;
 
 import java.io.File;
 import java.io.FileReader;
@@ -12,7 +14,7 @@ import java.io.FileWriter;
 import java.util.Properties;
 
 public class Main {
-    public static final String VERSION = "1.0.4 Pre1";
+    public static final String VERSION = "1.0.5 Pre2";
     public static final Bukkit_Router router = new Bukkit_Router();
     public static NanoHTTPd server;
 
@@ -24,6 +26,8 @@ public class Main {
         if (!set.exists()) {
             Properties pr = new Properties();
             pr.setProperty("port", "80");
+            pr.setProperty("watchdog", "true");
+            pr.setProperty("firewall", "true");
             pr.store(new FileWriter(set), "BukkitHTTP Server Settings");
         }
         Properties pr = new Properties();
@@ -53,5 +57,14 @@ public class Main {
         }
         Runtime.getRuntime().addShutdownHook(new Thread(BukkitStop::doStop));
         server = new NanoHTTPd(port, router);
+        if (pr.getProperty("watchdog").equals("true")) {
+            Logger.info("WatchDog is enabled.");
+            new Thread(new WatchDog()).start();
+            if (!pr.getProperty("firewall").equals("true")) {
+                Logger.warning("Firewall is disabled!");
+                HookManager.socketHook = new EmptySock();
+            }
+        }
+        HookManager.invoke();
     }
 }
