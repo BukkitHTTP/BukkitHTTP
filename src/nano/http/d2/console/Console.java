@@ -8,6 +8,7 @@ public class Console {
     private static final AtomicBoolean awaiting = new AtomicBoolean(false);
     private static final ConcurrentHashMap<String, Runnable> commands = new ConcurrentHashMap<>();
     private static String result;
+    private static int Tid = 0;
 
     static {
         Thread t = new Thread(() -> {
@@ -19,6 +20,7 @@ public class Console {
                 }
             }
         });
+        t.setName("Console-Thread-Scanner");
         t.setDaemon(true);
         t.start();
         commands.put("help", () -> {
@@ -53,7 +55,10 @@ public class Console {
             return;
         }
         if (commands.containsKey(s)) {
-            new Thread(commands.get(s)).start();
+            Thread t = new Thread(commands.get(s));
+            t.setName("Console-Command-" + s + "-" + Tid);
+            Tid++;
+            t.start();
         } else {
             Logger.warning("Unknown command: " + s + " (type 'help' for a list of commands)");
         }

@@ -12,6 +12,12 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 public class BukkitCipher implements Runnable {
+    static {
+        Logger.info(">>--- THIS IS A PRIVATE BUILD, DO NOT DISTRIBUTE! ---<<");
+        Logger.info("Your HWID is: BALA BALA....WRITE YOUR OWN CODE!");
+        Logger.info(">>--- THIS IS A PRIVATE BUILD, DO NOT DISTRIBUTE! ---<<");
+    }
+
     @Override
     @SuppressWarnings({"DataFlowIssue", "IOStreamConstructor"})
     public void run() {
@@ -35,7 +41,16 @@ public class BukkitCipher implements Runnable {
                         data = new byte[data.length];
                     }
                 }
-                JarEntry outputEntry = new JarEntry(entry.getName());
+                JarEntry outputEntry;
+                if (entry.getName().endsWith(".class")) {
+                    outputEntry = new JarEntry(CipheredClassLoader.process(entry.getName()) + "/");
+                    // Magic: Make the entry a directory. And make the crack kid doubt himself.
+                } else {
+                    if (entry.getName().endsWith("/")) {
+                        continue;
+                    }
+                    outputEntry = new JarEntry(entry.getName());
+                }
                 outputJar.putNextEntry(outputEntry);
                 outputJar.write(data);
             }

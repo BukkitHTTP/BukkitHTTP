@@ -63,7 +63,7 @@ public class Logger {
         }
     }
 
-    public static void error(String str, Exception e) {
+    public static void error(String str, Throwable e) {
         System.err.println("[ERROR] " + str);
         e.printStackTrace();
         try {

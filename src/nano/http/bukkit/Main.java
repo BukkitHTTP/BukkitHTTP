@@ -14,13 +14,17 @@ import java.io.FileWriter;
 import java.util.Properties;
 
 public class Main {
-    public static final String VERSION = "1.0.5 Pre2";
+    public static final String VERSION = "1.0.6 Pre1";
     public static final Bukkit_Router router = new Bukkit_Router();
     public static NanoHTTPd server;
 
     @SuppressWarnings("DataFlowIssue")
     public static void main(String[] args) throws Exception {
         Logger.info("BukkitHTTP v" + VERSION + " (powered by NanoHTTPd)");
+        //noinspection ConstantValue
+        if (Main.VERSION.contains("Pro")) {
+            Console.register("_cipher", new BukkitCipher());
+        }
         long start = System.currentTimeMillis();
         File set = new File("server.properties");
         if (!set.exists()) {
@@ -51,20 +55,19 @@ public class Main {
         Console.register("load", new BukkitLoad());
         Console.register("unload", new BukkitUnload());
         Console.register("pl", new BukkitPlugins());
-        //noinspection ConstantValue
-        if (Main.VERSION.contains("Pro")) {
-            Console.register("_cipher", new BukkitCipher());
-        }
         Runtime.getRuntime().addShutdownHook(new Thread(BukkitStop::doStop));
         server = new NanoHTTPd(port, router);
         if (pr.getProperty("watchdog").equals("true")) {
             Logger.info("WatchDog is enabled.");
-            new Thread(new WatchDog()).start();
+            Thread t = new Thread(new WatchDog());
+            t.setName("WatchDog");
+            t.start();
             if (!pr.getProperty("firewall").equals("true")) {
                 Logger.warning("Firewall is disabled!");
                 HookManager.socketHook = new EmptySock();
             }
         }
         HookManager.invoke();
+        Console.register("dump", WatchDog::dump);
     }
 }

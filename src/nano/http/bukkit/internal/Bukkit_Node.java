@@ -31,18 +31,18 @@ public class Bukkit_Node {
         this.name = name;
     }
 
-    public void onEnable(String name, File dir, String uri) throws Exception {
+    public void onEnable(String name, File dir, String uri) throws Throwable {
         onEnable.invoke(serverProvider, name, dir, uri);
     }
 
-    public void onDisable() throws Exception {
+    public void onDisable() throws Throwable {
         onDisable.invoke(serverProvider);
     }
 
     public Response serve(String uri, String method, Properties header, Properties parms, Properties files) {
         try {
             return (Response) serve.invoke(serverProvider, uri, method, header, parms, files);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Logger.error("Error while serving request.", e);
             return new Response(Status.HTTP_INTERNALERROR, Mime.MIME_PLAINTEXT, "Error: " + e);
         }
@@ -51,9 +51,11 @@ public class Bukkit_Node {
     public Response fallback(String uri, String method, Properties header, Properties parms, Properties files) {
         try {
             return (Response) fallback.invoke(serverProvider, uri, method, header, parms, files);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Logger.error("Error while serving fallback request.", e);
             return null;
         }
     }
+
+    // Trust no plugin. God knows what they will throw.
 }

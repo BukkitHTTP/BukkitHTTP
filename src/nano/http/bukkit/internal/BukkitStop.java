@@ -19,7 +19,7 @@ public class BukkitStop implements Runnable {
             try {
                 node.onDisable();
                 Logger.info("[ " + now++ + " / " + count + " ]");
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 Logger.error("Error while disabling plugin " + node.name + " , ignoring!", e);
             }
         }

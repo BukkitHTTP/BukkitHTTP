@@ -3,6 +3,7 @@ package nano.http.d2.core;
 import nano.http.d2.console.Logger;
 import nano.http.d2.consts.Mime;
 import nano.http.d2.consts.Status;
+import nano.http.d2.core.thread.NanoExecutor;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.serve.ServeProvider;
 import nano.http.d2.session.SessionManager;
@@ -21,17 +22,19 @@ import java.util.*;
 public class HTTPSession implements Runnable {
     private final Socket mySocket;
     private final ServeProvider myServer;
+    public boolean isHighDemand = false;
 
     public HTTPSession(Socket s, ServeProvider server) {
         mySocket = s;
         myServer = server;
-        Thread t = new Thread(this);
-        t.setDaemon(true);
-        t.start();
+        NanoExecutor.executorService.submit(this);
     }
 
     public void run() {
         try {
+            if (isHighDemand) {
+                sendError(Status.HTTP_BADGATEWAY, "Server is busy - NanoHTTP");
+            }
             InputStream is = mySocket.getInputStream();
             if (is == null) {
                 return;
@@ -59,7 +62,8 @@ public class HTTPSession implements Runnable {
             decodeHeader(hin, pre, parms, header);
             String method = pre.getProperty("method");
             String uri = pre.getProperty("uri");
-            Logger.info(method + " " + uri + " (" + mySocket.getInetAddress().getHostAddress() + ")");
+
+            Logger.debug(method + " " + uri + " (" + mySocket.getInetAddress().getHostAddress() + ")");
             long size = 0x7FFFFFFFFFFFFFFFL;
             String contentLength = header.getProperty("content-length");
             if (contentLength != null) {

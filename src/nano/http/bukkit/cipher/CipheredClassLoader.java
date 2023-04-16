@@ -1,6 +1,7 @@
 package nano.http.bukkit.cipher;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -10,9 +11,9 @@ public class CipheredClassLoader extends ClassLoader {
     JarFile jar;
     Enumeration<JarEntry> entries;
 
-    public CipheredClassLoader(byte[] key, File xar) throws IOException {
+    public CipheredClassLoader(String key, File xar) throws IOException {
         super(CipheredClassLoader.class.getClassLoader());
-        this.key = key;
+        this.key = key.getBytes(StandardCharsets.UTF_8);
         jar = new JarFile(xar);
         entries = jar.entries();
     }
@@ -38,10 +39,22 @@ public class CipheredClassLoader extends ClassLoader {
         }
     }
 
+    public static String process(String s) {
+        int h = s.hashCode();
+        String ans = h > 0 ? "Nano" : "Guard";
+        h = Math.abs(h);
+        h %= 89999999;
+        h += 10000000;
+        ans += h;
+        ans += "$.class";
+        return ans;
+    }
+
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         try {
             String path = name.replace('.', '/') + ".class";
+            path = process(path);
             JarEntry entry = jar.getJarEntry(path);
             if (entry != null) {
                 byte[] bytes = readAllBytes(jar.getInputStream(entry));
@@ -58,6 +71,13 @@ public class CipheredClassLoader extends ClassLoader {
 
     @Override
     public InputStream getResourceAsStream(String name) {
+        InputStream is = super.getResourceAsStream(name);
+        if (is != null) {
+            return is;
+        }
+        if (name.startsWith("/")) {
+            name = name.substring(1);
+        }
         JarEntry entry = jar.getJarEntry(name);
         if (entry != null) {
             try {
@@ -67,9 +87,8 @@ public class CipheredClassLoader extends ClassLoader {
             } catch (IOException e) {
                 return null;
             }
-        } else {
-            return super.getResourceAsStream(name);
         }
+        return null;
     }
 
     public void close() throws IOException {

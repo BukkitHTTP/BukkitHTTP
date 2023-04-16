@@ -14,7 +14,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -50,8 +49,14 @@ public class Bukkit_Router implements ServeProvider {
             if (!pr.containsKey("name")) {
                 throw new UnsupportedOperationException("plugin.properties does not contain name.");
             }
-            //noinspection ConstantValue
-            if (pr.containsKey("cipher") && Main.VERSION.contains("Pro")) {
+            if (pr.containsKey("cipher")) {
+                //noinspection ConstantValue
+                if (!Main.VERSION.contains("Pro")) {
+                    Logger.warning("There is a DRM plugin in the plugin folder!");
+                    Logger.warning("Contact the developer of it for more information.");
+                    Logger.warning("Plugin " + pr.getProperty("name") + " will not be loaded.");
+                    return;
+                }
                 File xar = new File(dir, pr.getProperty("jar"));
                 if (!xar.exists()) {
                     throw new FileNotFoundException("Jar not found.");
@@ -63,7 +68,7 @@ public class Bukkit_Router implements ServeProvider {
                     pswd = Console.await();
                 }
                 assert pswd != null;
-                ClassLoader cpcl = new CipheredClassLoader(pswd.getBytes(StandardCharsets.UTF_8), xar);
+                ClassLoader cpcl = new CipheredClassLoader(pswd, xar);
                 addNode(pr.getProperty("uri"), cpcl, pr.getProperty("main"), pr.getProperty("name"), dir);
                 Logger.info("Plugin " + pr.getProperty("name") + " loaded successfully. (!Ciphered!)");
             } else {
@@ -75,12 +80,12 @@ public class Bukkit_Router implements ServeProvider {
                 addNode(pr.getProperty("uri"), pcl, pr.getProperty("main"), pr.getProperty("name"), dir);
                 Logger.info("Plugin " + pr.getProperty("name") + " loaded successfully.");
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Logger.error("Plugin loaded unsuccessfully due to an exception.", e);
         }
     }
 
-    private void addNode(String uri, ClassLoader classLoader, String classPath, String name, File dir) throws Exception {
+    private void addNode(String uri, ClassLoader classLoader, String classPath, String name, File dir) throws Throwable {
         if (uri.length() < 3) {
             throw new UnsupportedOperationException("URI must be at least 3 characters long.");
         }
@@ -136,7 +141,7 @@ public class Bukkit_Router implements ServeProvider {
             if (node.name.equals(name)) {
                 try {
                     node.onDisable();
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     Logger.error("Error while disabling plugin. Enforcing clean-up.", e);
                 }
                 try {

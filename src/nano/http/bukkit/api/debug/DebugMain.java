@@ -13,12 +13,16 @@ public class DebugMain {
     public static void debug(Class<?> plugin, String uri) throws Exception {
         Bukkit_Node node = new Bukkit_Node(uri, plugin.getClassLoader(), plugin.getName(), "Debug");
         DebugRouter router = new DebugRouter(node, uri);
-        node.onEnable(plugin.getName(), new File("."), uri);
+        try {
+            node.onEnable(plugin.getName(), new File("."), uri);
+        } catch (Throwable e) {
+            Logger.error("Error while enabling plugin.", e);
+        }
         new NanoHTTPd(80, router);
         Console.register("stop", () -> {
             try {
                 node.onDisable();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
             System.exit(0);
