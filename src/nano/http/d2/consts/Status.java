@@ -1,6 +1,6 @@
 package nano.http.d2.consts;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "SpellCheckingInspection"})
 public class Status {
     /**
      * Some HTTP response status codes
@@ -8,7 +8,8 @@ public class Status {
     public static final String
             HTTP_OK = "200 OK",
             HTTP_NOCONTENT = "204 No Content",
-            HTTP_REDIRECT = "301 Moved Permanently",
+            HTTP_PERMAREDIRECT = "301 Moved Permanently",
+            HTTP_REDIRECT = "302 Found",
             HTTP_FORBIDDEN = "403 Forbidden",
             HTTP_NOTFOUND = "404 Not Found",
             HTTP_BADREQUEST = "400 Bad Request",

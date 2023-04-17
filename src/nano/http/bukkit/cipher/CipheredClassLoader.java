@@ -13,7 +13,11 @@ public class CipheredClassLoader extends ClassLoader {
 
     public CipheredClassLoader(String key, File xar) throws IOException {
         super(CipheredClassLoader.class.getClassLoader());
-        this.key = key.getBytes(StandardCharsets.UTF_8);
+        String tmpKey = KeyGen.getKey(key);
+        if (tmpKey.equals("X")) {
+            throw new RuntimeException("Unable to validate License");
+        }
+        this.key = tmpKey.getBytes(StandardCharsets.UTF_8);
         jar = new JarFile(xar);
         entries = jar.entries();
     }
@@ -30,11 +34,13 @@ public class CipheredClassLoader extends ClassLoader {
 
     public static void decrypt(byte[] bytes, byte[] key) {
         for (int i = 0; i < bytes.length; i++) {
-            if (i % 10 == 0) {
-                bytes[i] ^= (byte) 0x05;
-                // Or anything else. Just don't leave it unmodified. Or see cracks fly. 
-                // What? Why I leave it undocumented? Why don't you open your source?
+            if (i % 101 == 0) {
+                bytes[i] ^= (byte) 0x2B;
             }
+            if (i % 2 == 0) {
+                bytes[i] ^= (byte) 0x78;
+            }
+            // No need to be polite here.
             bytes[i] ^= key[i % key.length];
         }
     }

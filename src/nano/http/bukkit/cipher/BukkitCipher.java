@@ -14,7 +14,7 @@ import java.util.jar.JarOutputStream;
 public class BukkitCipher implements Runnable {
     static {
         Logger.info(">>--- THIS IS A PRIVATE BUILD, DO NOT DISTRIBUTE! ---<<");
-        Logger.info("Your HWID is: BALA BALA....WRITE YOUR OWN CODE!");
+        Logger.info("Your HWID is:   " + KeyGen.hwid());
         Logger.info(">>--- THIS IS A PRIVATE BUILD, DO NOT DISTRIBUTE! ---<<");
     }
 
