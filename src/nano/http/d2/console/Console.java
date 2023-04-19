@@ -13,11 +13,14 @@ public class Console {
     static {
         Thread t = new Thread(() -> {
             Scanner s = new Scanner(System.in);
-            while (true) {
-                try {
+            try {
+                while (true) {
                     handle(s.nextLine());
-                } catch (Exception ignored) {
                 }
+            } catch (Exception e) {
+                Logger.error("Console error", e);
+                Logger.warning("The console has been disabled due to an error.");
+                Logger.warning("Please restart the server to re-enable the console.");
             }
         });
         t.setName("Console-Thread-Scanner");

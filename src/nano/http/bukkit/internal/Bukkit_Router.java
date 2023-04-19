@@ -1,7 +1,7 @@
 package nano.http.bukkit.internal;
 
 import nano.http.bukkit.Main;
-import nano.http.bukkit.cipher.CipheredClassLoader;
+import nano.http.bukkit.internal.cipher.CipheredClassLoader;
 import nano.http.d2.console.Console;
 import nano.http.d2.console.Logger;
 import nano.http.d2.consts.Mime;

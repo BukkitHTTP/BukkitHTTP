@@ -14,6 +14,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Handles one session, i.e. parses the HTTP request
@@ -63,7 +64,8 @@ public class HTTPSession implements Runnable {
             String method = pre.getProperty("method");
             String uri = pre.getProperty("uri");
 
-            Logger.debug(method + " " + uri + " (" + mySocket.getInetAddress().getHostAddress() + ")");
+            // Logger.debug(method + " " + uri + " (" + mySocket.getInetAddress().getHostAddress() + ")");
+            // TODO Just a bookmark.
             long size = 0x7FFFFFFFFFFFFFFFL;
             String contentLength = header.getProperty("content-length");
             if (contentLength != null) {
@@ -119,7 +121,18 @@ public class HTTPSession implements Runnable {
 
             // Create a BufferedReader for easily reading it as string.
             ByteArrayInputStream bin = new ByteArrayInputStream(fbuf);
-            BufferedReader in = new BufferedReader(new InputStreamReader(bin));
+            String encoding = header.getProperty("content-encoding");
+            BufferedReader in = null;
+            if (encoding != null) {
+                if (encoding.equalsIgnoreCase("gzip")) {
+                    in = new BufferedReader(new InputStreamReader(new GZIPInputStream(bin)));
+                } else {
+                    sendError(Status.HTTP_BADREQUEST, "BAD REQUEST: Content encoding " + encoding + " is not supported. Expected gzip or none.");
+                }
+            } else {
+                in = new BufferedReader(new InputStreamReader(bin));
+            }
+            assert in != null;
 
             // If the method is POST, there may be parameters
             // in data section, too, read it:
@@ -146,7 +159,7 @@ public class HTTPSession implements Runnable {
 
                     decodeMultipartData(boundary, fbuf, in, parms, files, uri);
                 } else {
-                    // Handle application/x-www-form-urlencoded
+                    // Handle application/x-www-form-urlencoded and application/json
                     StringBuilder postLine = new StringBuilder();
                     char[] pbuf = new char[512];
                     int read = in.read(pbuf);
@@ -399,8 +412,7 @@ public class HTTPSession implements Runnable {
      * identical keys due to the simplicity of Properties -- if you need multiples,
      * you might want to replace the Properties with a Hashtable of Vectors or such.
      */
-    private void decodeParms(String parms, Properties p)
-            throws InterruptedException {
+    private void decodeParms(String parms, Properties p) {
         if (parms == null) {
             return;
         }

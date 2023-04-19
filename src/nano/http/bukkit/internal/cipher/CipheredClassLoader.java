@@ -1,15 +1,13 @@
-package nano.http.bukkit.cipher;
+package nano.http.bukkit.internal.cipher;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class CipheredClassLoader extends ClassLoader {
     byte[] key;
     JarFile jar;
-    Enumeration<JarEntry> entries;
 
     public CipheredClassLoader(String key, File xar) throws IOException {
         super(CipheredClassLoader.class.getClassLoader());
@@ -19,7 +17,6 @@ public class CipheredClassLoader extends ClassLoader {
         }
         this.key = tmpKey.getBytes(StandardCharsets.UTF_8);
         jar = new JarFile(xar);
-        entries = jar.entries();
     }
 
     public static byte[] readAllBytes(InputStream is) throws IOException {

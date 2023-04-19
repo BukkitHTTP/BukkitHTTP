@@ -143,8 +143,8 @@ public class FileServer {
             FileInputStream fis = new FileInputStream(f);
             fis.skip(startFrom);
             Response r = new Response(Status.HTTP_OK, mime, fis);
-            r.addHeader("Content-length", "" + (f.length() - startFrom));
-            r.addHeader("Content-range", "" + startFrom + "-" +
+            r.addHeader("Content-length", String.valueOf(f.length() - startFrom));
+            r.addHeader("Content-range", startFrom + "-" +
                     (f.length() - 1) + "/" + f.length());
             return r;
         } catch (IOException ioe) {

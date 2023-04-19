@@ -68,6 +68,8 @@ public class Misc {
         return newUri.toString();
     }
 
+    // 历史遗留问题，没法删，别用
+    @Deprecated
     public static String chinese(String text) {
         return "<html>\n" +
                 "<head>\n" +

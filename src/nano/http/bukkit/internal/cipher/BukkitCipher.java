@@ -1,4 +1,4 @@
-package nano.http.bukkit.cipher;
+package nano.http.bukkit.internal.cipher;
 
 import nano.http.d2.console.Console;
 import nano.http.d2.console.Logger;
