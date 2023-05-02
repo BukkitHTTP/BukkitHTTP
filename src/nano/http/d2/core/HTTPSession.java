@@ -3,7 +3,7 @@ package nano.http.d2.core;
 import nano.http.d2.console.Logger;
 import nano.http.d2.consts.Mime;
 import nano.http.d2.consts.Status;
-import nano.http.d2.core.thread.NanoExecutor;
+import nano.http.d2.core.thread.NanoPool;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.serve.ServeProvider;
 import nano.http.d2.session.SessionManager;
@@ -28,7 +28,7 @@ public class HTTPSession implements Runnable {
     public HTTPSession(Socket s, ServeProvider server) {
         mySocket = s;
         myServer = server;
-        NanoExecutor.executorService.submit(this);
+        NanoPool.submit(this);
     }
 
     public void run() {
@@ -122,17 +122,17 @@ public class HTTPSession implements Runnable {
             // Create a BufferedReader for easily reading it as string.
             ByteArrayInputStream bin = new ByteArrayInputStream(fbuf);
             String encoding = header.getProperty("content-encoding");
-            BufferedReader in = null;
+            BufferedReader br = null;
             if (encoding != null) {
                 if (encoding.equalsIgnoreCase("gzip")) {
-                    in = new BufferedReader(new InputStreamReader(new GZIPInputStream(bin)));
+                    br = new BufferedReader(new InputStreamReader(new GZIPInputStream(bin)));
                 } else {
                     sendError(Status.HTTP_BADREQUEST, "BAD REQUEST: Content encoding " + encoding + " is not supported. Expected gzip or none.");
                 }
             } else {
-                in = new BufferedReader(new InputStreamReader(bin));
+                br = new BufferedReader(new InputStreamReader(bin));
             }
-            assert in != null;
+            assert br != null;
 
             // If the method is POST, there may be parameters
             // in data section, too, read it:
@@ -157,21 +157,20 @@ public class HTTPSession implements Runnable {
                     st.nextToken();
                     String boundary = st.nextToken();
 
-                    decodeMultipartData(boundary, fbuf, in, parms, files, uri);
+                    decodeMultipartData(boundary, fbuf, br, parms, files, uri);
                 } else {
                     // Handle application/x-www-form-urlencoded and application/json
                     StringBuilder postLine = new StringBuilder();
                     char[] pbuf = new char[512];
-                    int read = in.read(pbuf);
+                    int read = br.read(pbuf);
                     while (read >= 0 && !postLine.toString().endsWith("\r\n")) {
                         postLine.append(String.valueOf(pbuf, 0, read));
-                        read = in.read(pbuf);
+                        read = br.read(pbuf);
                     }
                     postLine = new StringBuilder(postLine.toString().trim());
                     decodeParms(postLine.toString(), parms);
                 }
             }
-
             // Ok, now do the serve()
             Response r = HookManager.requestHook.serve(uri, method, header, parms, files, myServer, mySocket.getInetAddress().getHostAddress());
             if (r == null) {
@@ -182,8 +181,8 @@ public class HTTPSession implements Runnable {
                 }
                 sendResponse(r.status, r.mimeType, r.header, r.data);
             }
-            in.close();
-            is.close();
+            br.close();
+            mySocket.close();
         } catch (IOException ioe) {
             try {
                 sendError(Status.HTTP_INTERNALERROR, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
@@ -451,7 +450,7 @@ public class HTTPSession implements Runnable {
 
             OutputStream out = mySocket.getOutputStream();
             PrintWriter pw = new PrintWriter(out);
-            pw.print("HTTP/1.0 " + status + " \r\n");
+            pw.print("HTTP/1.1 " + status + " \r\n");
 
             if (mime != null) {
                 pw.print("Content-Type: " + mime + "\r\n");

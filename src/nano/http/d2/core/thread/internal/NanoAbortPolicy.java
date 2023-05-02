@@ -1,7 +1,8 @@
-package nano.http.d2.core.thread;
+package nano.http.d2.core.thread.internal;
 
 import nano.http.d2.console.Logger;
 import nano.http.d2.core.HTTPSession;
+import nano.http.d2.core.thread.NanoPool;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.FutureTask;
@@ -36,7 +37,7 @@ public class NanoAbortPolicy implements RejectedExecutionHandler {
             HTTPSession session = (HTTPSession) getRunnable(ft);
             if (!session.isHighDemand) {
                 session.isHighDemand = true;
-                NanoExecutor.errorExecutorService.submit(session);
+                NanoPool.submitError(session);
             }
         } catch (Throwable ignored) {
         }

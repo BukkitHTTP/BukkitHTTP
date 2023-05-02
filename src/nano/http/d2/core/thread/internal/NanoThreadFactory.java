@@ -1,4 +1,4 @@
-package nano.http.d2.core.thread;
+package nano.http.d2.core.thread.internal;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

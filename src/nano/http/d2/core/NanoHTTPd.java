@@ -1,5 +1,6 @@
 package nano.http.d2.core;
 
+import nano.http.d2.console.Logger;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.serve.ServeProvider;
 
@@ -23,7 +24,8 @@ public class NanoHTTPd {
                     }
                     new HTTPSession(s, server);
                 }
-            } catch (Exception ignored) {
+            } catch (Throwable e) {
+                Logger.error("Terminating server thread due to an exception...", e);
             }
         });
         myThread.setName("NanoHTTP-Server-" + port);

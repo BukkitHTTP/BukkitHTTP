@@ -6,6 +6,7 @@ import nano.http.bukkit.internal.cipher.KeyGen;
 import nano.http.d2.console.Console;
 import nano.http.d2.console.Logger;
 import nano.http.d2.core.NanoHTTPd;
+import nano.http.d2.core.thread.NanoPool;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.hooks.impls.EmptySock;
 
@@ -21,27 +22,36 @@ public class Main {
 
     @SuppressWarnings("DataFlowIssue")
     public static void main(String[] args) throws Exception {
+        // Log the start time
+        long start = System.currentTimeMillis();
+
+        // Print the version
         Logger.info("BukkitHTTP v" + VERSION + " (powered by NanoHTTPd)");
         //noinspection ConstantValue
         if (Main.VERSION.contains("Pro")) {
+            // Enable the features of the Pro version
             Console.register("_cipher", new BukkitCipher());
             Console.register("_keygen", new KeyGen());
         }
-        long start = System.currentTimeMillis();
+
+        // Load the configuration
         File set = new File("server.properties");
         if (!set.exists()) {
             Properties pr = new Properties();
             pr.setProperty("port", "80");
             pr.setProperty("watchdog", "true");
             pr.setProperty("firewall", "true");
+            pr.setProperty("threads", "20");
+            pr.setProperty("errhandler-threads", "3");
             pr.store(new FileWriter(set), "BukkitHTTP Server Settings");
         }
         Properties pr = new Properties();
         pr.load(new FileReader(set));
-        if (!pr.containsKey("port")) {
-            throw new Exception("Port not found in server.properties");
-        }
+
+        // Parse the configuration
         int port = Integer.parseInt(pr.getProperty("port"));
+
+        // Load the plugins
         File plugin = new File("plugins");
         if (!plugin.exists()) {
             if (!plugin.mkdir()) {
@@ -52,13 +62,15 @@ public class Main {
         for (File f : plugin.listFiles()) {
             router.load(f);
         }
-        Logger.info("Done! (" + (System.currentTimeMillis() - start) + "ms)" + " Listening on port " + port);
+
+        // Register the core console commands
         Console.register("stop", new BukkitStop());
         Console.register("load", new BukkitLoad());
         Console.register("unload", new BukkitUnload());
         Console.register("pl", new BukkitPlugins());
-        Runtime.getRuntime().addShutdownHook(new Thread(BukkitStop::doStop));
-        server = new NanoHTTPd(port, router);
+        Console.register("dump", WatchDog::dump);
+
+        // Start the watchdog, if enabled
         if (pr.getProperty("watchdog").equals("true")) {
             Logger.info("WatchDog is enabled.");
             Thread t = new Thread(new WatchDog());
@@ -69,7 +81,16 @@ public class Main {
                 HookManager.socketHook = new EmptySock();
             }
         }
+        // Some magic :P
+        Runtime.getRuntime().addShutdownHook(new Thread(BukkitStop::doStop));
         HookManager.invoke();
-        Console.register("dump", WatchDog::dump);
+        NanoPool.setCoreSize(Integer.parseInt(pr.getProperty("threads")));
+        NanoPool.setErrorSize(Integer.parseInt(pr.getProperty("errhandler-threads")));
+
+        // Start the server
+        server = new NanoHTTPd(port, router);
+
+        // Enjoy!
+        Logger.info("Done! (" + (System.currentTimeMillis() - start) + "ms)" + " Listening on port " + port);
     }
 }

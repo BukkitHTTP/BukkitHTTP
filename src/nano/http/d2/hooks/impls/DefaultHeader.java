@@ -12,5 +12,6 @@ public class DefaultHeader implements HeaderHookProvider {
         r.addHeader("Access-Control-Allow-Origin", "*");
         r.addHeader("Access-Control-Max-Age", "10");
         r.addHeader("Access-Control-Expose-Headers", "*");
+        r.addHeader("Connection", "close");
     }
 }
