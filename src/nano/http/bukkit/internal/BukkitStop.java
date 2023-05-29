@@ -4,7 +4,7 @@ import nano.http.bukkit.Main;
 import nano.http.d2.console.Logger;
 
 public class BukkitStop implements Runnable {
-    private static boolean isStopping = false;
+    public static boolean isStopping = false;
 
     public static void doStop() {
         if (isStopping) {

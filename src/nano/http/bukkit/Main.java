@@ -16,7 +16,7 @@ import java.io.FileWriter;
 import java.util.Properties;
 
 public class Main {
-    public static final String VERSION = "2.0 Release1 (Pro)";
+    public static final String VERSION = "2.0 Release2";
     public static final Bukkit_Router router = new Bukkit_Router();
     public static NanoHTTPd server;
 
@@ -76,7 +76,12 @@ public class Main {
             Thread t = new Thread(new WatchDog());
             t.setName("BukkitHTTP-WatchDog");
             t.start();
-            if (!pr.getProperty("firewall").equals("true")) {
+            String firewall = pr.getProperty("firewall");
+            if (!firewall.equals("true")) {
+                if (firewall.equals("cloudflare")) {
+                    Logger.warning("Enabling CloudFlare Only Mode!");
+                    HookManager.requestHook = new CloudflareHook(HookManager.requestHook);
+                }
                 Logger.warning("Firewall is disabled!");
                 HookManager.socketHook = new EmptySock();
             }

@@ -1,5 +1,6 @@
 package nano.http.d2.core;
 
+import nano.http.bukkit.internal.BukkitStop;
 import nano.http.d2.console.Logger;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.serve.ServeProvider;
@@ -25,7 +26,11 @@ public class NanoHTTPd {
                     new HTTPSession(s, server);
                 }
             } catch (Throwable e) {
-                Logger.error("Terminating server thread due to an exception...", e);
+                if (BukkitStop.isStopping) {
+                    Logger.info("Kaveh: 服务器已关闭");
+                } else {
+                    Logger.error("Kaveh: 服务器出现错误", e);
+                }
             }
         });
         myThread.setName("NanoHTTP-Server-" + port);

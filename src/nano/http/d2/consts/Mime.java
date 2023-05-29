@@ -7,10 +7,10 @@ public class Mime {
      */
     public static final String
             MIME_ICON = "image/x-icon",
-            MIME_PLAINTEXT = "text/plain",
-            MIME_HTML = "text/html",
+            MIME_PLAINTEXT = "text/plain;encoding=utf-8",
+            MIME_HTML = "text/html;encoding=utf-8",
             MIME_DEFAULT_BINARY = "application/octet-stream",
-            MIME_XML = "text/xml",
+            MIME_XML = "text/xml;encoding=utf-8",
             MIME_JPEG = "image/jpeg",
-            MIME_JSON = "application/json";
+            MIME_JSON = "application/json;encoding=utf-8";
 }
