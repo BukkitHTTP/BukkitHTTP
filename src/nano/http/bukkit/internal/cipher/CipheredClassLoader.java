@@ -1,8 +1,10 @@
 package nano.http.bukkit.internal.cipher;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class CipheredClassLoader extends ClassLoader {
@@ -53,46 +55,6 @@ public class CipheredClassLoader extends ClassLoader {
         return ans;
     }
 
-    @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-        try {
-            String path = name.replace('.', '/') + ".class";
-            path = process(path);
-            JarEntry entry = jar.getJarEntry(path);
-            if (entry != null) {
-                byte[] bytes = readAllBytes(jar.getInputStream(entry));
-                if (bytes[0] != (byte) 0xCA || bytes[1] != (byte) 0xFE || bytes[2] != (byte) 0xBA || bytes[3] != (byte) 0xBE) {
-                    decrypt(bytes, key);
-                }
-                return defineClass(name, bytes, 0, bytes.length);
-            }
-            return getParent().loadClass(name);
-        } catch (IOException e) {
-            throw new ClassNotFoundException(name, e);
-        }
-    }
-
-    @Override
-    public InputStream getResourceAsStream(String name) {
-        InputStream is = super.getResourceAsStream(name);
-        if (is != null) {
-            return is;
-        }
-        if (name.startsWith("/")) {
-            name = name.substring(1);
-        }
-        JarEntry entry = jar.getJarEntry(name);
-        if (entry != null) {
-            try {
-                byte[] bytes = readAllBytes(jar.getInputStream(entry));
-                decrypt(bytes, key);
-                return new ByteArrayInputStream(bytes);
-            } catch (IOException e) {
-                return null;
-            }
-        }
-        return null;
-    }
 
     public void close() throws IOException {
         jar.close();
