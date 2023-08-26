@@ -53,6 +53,7 @@ public class DefaultRequest implements RequestHookProvider {
             //noinspection DataFlowIssue
             return new Response(Status.HTTP_OK, Mime.MIME_JPEG, new ByteArrayInputStream(Captcha.drawImage((String) captcha)));
         }
+        parms.setProperty("IP", ip);
         return sp.serve(uri, method, header, parms, files);
     }
 }

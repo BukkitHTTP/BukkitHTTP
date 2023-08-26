@@ -64,7 +64,7 @@ public class HTTPSession implements Runnable {
             String method = pre.getProperty("method");
             String uri = pre.getProperty("uri");
 
-            // Logger.debug(method + " " + uri + " (" + mySocket.getInetAddress().getHostAddress() + ")");
+            // Logger.info(method + " " + uri + " (" + mySocket.getInetAddress().getHostAddress() + ")");
             // TODO Just a bookmark.
             long size = 0x7FFFFFFFFFFFFFFFL;
             String contentLength = header.getProperty("content-length");
@@ -139,11 +139,14 @@ public class HTTPSession implements Runnable {
             if ("POST".equalsIgnoreCase(method)) {
                 String contentType = "";
                 String contentTypeHeader = header.getProperty("content-type");
+                if (contentTypeHeader == null) {
+                    sendError(Status.HTTP_BADREQUEST, "BAD REQUEST: Content-type is missing");
+                }
+                assert contentTypeHeader != null;
                 StringTokenizer st = new StringTokenizer(contentTypeHeader, "; ");
                 if (st.hasMoreTokens()) {
                     contentType = st.nextToken();
                 }
-
                 if ("multipart/form-data".equalsIgnoreCase(contentType)) {
                     // Handle multipart/form-data
                     if (!st.hasMoreTokens()) {

@@ -27,9 +27,9 @@ public class NanoHTTPd {
                 }
             } catch (Throwable e) {
                 if (BukkitStop.isStopping) {
-                    Logger.info("Kaveh: 服务器已关闭");
+                    Logger.info("ND2: Server is closed...");
                 } else {
-                    Logger.error("Kaveh: 服务器出现错误", e);
+                    Logger.error("ND2: Server is force closed...", e);
                 }
             }
         });

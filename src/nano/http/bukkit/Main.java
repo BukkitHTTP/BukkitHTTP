@@ -16,7 +16,7 @@ import java.io.FileWriter;
 import java.util.Properties;
 
 public class Main {
-    public static final String VERSION = "2.2 Pre1";
+    public static final String VERSION = "2.41 _Leibniz_";
     public static final Bukkit_Router router = new Bukkit_Router();
     public static NanoHTTPd server;
 
@@ -24,7 +24,6 @@ public class Main {
     public static void main(String[] args) throws Exception {
         // Log the start time
         long start = System.currentTimeMillis();
-
         // Print the version
         Logger.info("BukkitHTTP v" + VERSION + " (powered by NanoHTTPd)");
         //noinspection ConstantValue
@@ -39,8 +38,8 @@ public class Main {
         if (!set.exists()) {
             Properties pr = new Properties();
             pr.setProperty("port", "80");
-            pr.setProperty("watchdog", "true");
-            pr.setProperty("firewall", "true");
+            pr.setProperty("watchdog", "false");
+            pr.setProperty("firewall", "false");
             pr.setProperty("threads", "20");
             pr.setProperty("errhandler-threads", "3");
             pr.store(new FileWriter(set), "BukkitHTTP Server Settings");
@@ -76,15 +75,18 @@ public class Main {
             Thread t = new Thread(new WatchDog());
             t.setName("BukkitHTTP-WatchDog");
             t.start();
-            String firewall = pr.getProperty("firewall");
-            if (!firewall.equals("true")) {
-                if (firewall.equals("cloudflare")) {
-                    Logger.warning("Enabling CloudFlare Only Mode!");
-                    HookManager.requestHook = new CloudflareHook(HookManager.requestHook);
-                }
-                Logger.warning("Firewall is disabled!");
-                HookManager.socketHook = new EmptySock();
+        }
+
+        String firewall = pr.getProperty("firewall");
+        if (!firewall.equals("true")) {
+            if (firewall.equals("cloudflare")) {
+                Logger.warning("Enabling CloudFlare Only Mode!");
+                HookManager.requestHook = new CloudflareHook(HookManager.requestHook);
             }
+            Logger.warning("Firewall is disabled!");
+            HookManager.socketHook = new EmptySock();
+        } else {
+            Logger.info("Firewall is enabled.");
         }
         // Some magic :P
         Runtime.getRuntime().addShutdownHook(new Thread(BukkitStop::doStop));

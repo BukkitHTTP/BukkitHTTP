@@ -34,9 +34,16 @@ public class MapSerl<K, V> {
             @Override
             protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
                 try {
-                    return context.loadClass(desc.getName());
+                    return Class.forName(desc.getName(), false, context);
                 } catch (ClassNotFoundException e) {
-                    return super.resolveClass(desc);
+                    try {
+                        return super.resolveClass(desc);
+                    } catch (ClassNotFoundException e1) {
+                        Logger.error("Failed to load class: " + desc.getName());
+                        Logger.error("From env loader: ", e);
+                        Logger.error("From system loader: ", e1);
+                    }
+                    throw new ClassNotFoundException();
                 }
             }
         };

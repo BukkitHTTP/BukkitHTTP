@@ -18,9 +18,13 @@ public class NanoExecutor {
     public final ExecutorService errorExecutorService;
 
     public NanoExecutor(int coreSize, int errorSize) {
-        if (coreSize < 2) throw new IllegalArgumentException("Core pool size must be at least 2");
+        if (coreSize < 2 && coreSize > -2) throw new IllegalArgumentException("Core pool size must be at least 2");
         if (errorSize < 1) throw new IllegalArgumentException("Error pool size must be at least 1");
-        executorService = new ThreadPoolExecutor(2, coreSize, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1), new NanoThreadFactory("Worker"), new NanoAbortPolicy());
+        if (coreSize > 0) {
+            executorService = new ThreadPoolExecutor(2, coreSize, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1), new NanoThreadFactory("Worker"), new NanoAbortPolicy());
+        } else {
+            executorService = new ThreadPoolExecutor(2, -coreSize, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1), new NanoThreadFactory("Worker"), new ThreadPoolExecutor.CallerRunsPolicy());
+        }
         errorExecutorService = new ThreadPoolExecutor(1, errorSize, 30L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(40), new NanoThreadFactory("ErrorHandler"), new NanoAbortPolicy());
     }
 }
