@@ -61,12 +61,12 @@ public class Request {
         URL url = new URL(dest);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/json");
         if (header != null) {
             for (String s : header.stringPropertyNames()) {
                 con.setRequestProperty(s, header.getProperty(s));
             }
         }
-        con.setRequestProperty("Content-Type", "application/json");
         con.setDoOutput(true);
         byte[] requestBodyBytes = data.getBytes(StandardCharsets.UTF_8);
         con.setRequestProperty("Content-Length", Integer.toString(requestBodyBytes.length));

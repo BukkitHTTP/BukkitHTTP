@@ -1,0 +1,6 @@
+*.iml
+*.log
+*.properties
+plugins
+out
+.idea
