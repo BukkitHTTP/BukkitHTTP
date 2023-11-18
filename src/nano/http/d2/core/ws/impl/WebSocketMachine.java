@@ -1,4 +1,4 @@
-package nano.http.d2.ws.impl;
+package nano.http.d2.core.ws.impl;
 
 import java.io.ByteArrayOutputStream;
 
@@ -9,7 +9,10 @@ public class WebSocketMachine {
 
     private void update0(byte b) {
         fin = (b & 0x80) != 0;
-        opcode = b & 0x0F;
+        int opcode_ = b & 0x0F;
+        if (opcode_ != 0) {
+            opcode = opcode_;
+        }
         state = 1;
     }
 

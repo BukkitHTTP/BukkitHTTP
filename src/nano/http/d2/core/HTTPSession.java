@@ -4,6 +4,7 @@ import nano.http.d2.console.Logger;
 import nano.http.d2.consts.Mime;
 import nano.http.d2.consts.Status;
 import nano.http.d2.core.thread.NanoPool;
+import nano.http.d2.core.ws.impl.WebSocketServer;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.serve.ServeProvider;
 import nano.http.d2.session.SessionManager;
@@ -174,6 +175,11 @@ public class HTTPSession implements Runnable {
                     decodeParms(postLine.toString(), parms);
                 }
             }
+
+            if (WebSocketServer.checkWsProtocol(header, method, mySocket, parms, uri)) {
+                return;
+            }
+
             // Ok, now do the serve()
             Response r = HookManager.requestHook.serve(uri, method, header, parms, files, myServer, mySocket.getInetAddress().getHostAddress());
             if (r == null) {

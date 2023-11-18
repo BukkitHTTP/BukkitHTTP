@@ -1,6 +1,6 @@
-package nano.http.d2.ws.impl;
+package nano.http.d2.core.ws.impl;
 
-import nano.http.d2.ws.WebSocket;
+import nano.http.d2.core.ws.WebSocket;
 
 import java.net.Socket;
 

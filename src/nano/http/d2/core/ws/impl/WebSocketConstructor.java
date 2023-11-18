@@ -1,4 +1,4 @@
-package nano.http.d2.ws.impl;
+package nano.http.d2.core.ws.impl;
 
 import java.nio.ByteBuffer;
 

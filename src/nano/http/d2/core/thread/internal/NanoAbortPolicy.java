@@ -20,7 +20,7 @@ public class NanoAbortPolicy implements RejectedExecutionHandler {
             runnerField = Class.forName("java.util.concurrent.Executors$RunnableAdapter").getDeclaredField("task");
             runnerField.setAccessible(true);
         } catch (Throwable t) {
-            Logger.warning("Incorrect Java version, err handler will not work! (Expected Java8)");
+            Logger.warning("Java version is not SE8, err handler will not work! (Expected Java8)");
             Logger.warning("Consider setting core pool size to negative value to change err handler to CallerRunsPolicy");
         }
     }

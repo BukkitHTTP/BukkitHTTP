@@ -1,4 +1,4 @@
-package nano.http.d2.ws.impl;
+package nano.http.d2.core.ws.impl;
 
 public class WebSocketResult {
     public int type = 0;

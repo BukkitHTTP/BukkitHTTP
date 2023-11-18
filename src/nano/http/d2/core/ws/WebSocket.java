@@ -1,12 +1,13 @@
-package nano.http.d2.ws;
+package nano.http.d2.core.ws;
 
-import nano.http.d2.ws.impl.WebSocketConstructor;
-import nano.http.d2.ws.impl.WebSocketMachine;
-import nano.http.d2.ws.impl.WebSocketResult;
+import nano.http.d2.core.ws.impl.WebSocketConstructor;
+import nano.http.d2.core.ws.impl.WebSocketMachine;
+import nano.http.d2.core.ws.impl.WebSocketResult;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.Properties;
 
 public abstract class WebSocket implements Runnable {
     private final Socket socket;
@@ -78,8 +79,11 @@ public abstract class WebSocket implements Runnable {
 
     public abstract void onBinaryMessage(byte[] bytes);
 
+    public void checkParms(Properties parms) {
+    }
+
     public void send(String message) {
-        if(isClosed) {
+        if (isClosed) {
             return;
         }
         try {
@@ -90,7 +94,7 @@ public abstract class WebSocket implements Runnable {
     }
 
     public void send(byte[] bytes) {
-        if(isClosed){
+        if (isClosed) {
             return;
         }
         try {
@@ -103,6 +107,7 @@ public abstract class WebSocket implements Runnable {
     public boolean isClosed() {
         return isClosed;
     }
+
     public void close() {
         try {
             output.write(WebSocketConstructor.constructCloseFrame(new byte[0]));
