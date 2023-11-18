@@ -1,5 +1,6 @@
 package nano.http.d2.utils;
 
+import nano.http.d2.core.ws.impl.WebSocketConstructor;
 import nano.http.d2.core.ws.impl.WebSocketMachine;
 import nano.http.d2.core.ws.impl.WebSocketResult;
 
@@ -21,6 +22,7 @@ public class WebSocketClient {
             "Sec-WebSocket-Version: 13\r\n\r\n";
     private final InputStream inputStream;
     private final OutputStream outputStream;
+    private boolean isClosed = false;
 
     public WebSocketClient(String uri) throws IOException {
         String[] split = uri.split("://");
@@ -70,62 +72,87 @@ public class WebSocketClient {
         this.outputStream = socket.getOutputStream();
     }
 
-    public void send(String msg) throws IOException {
-        byte[] bytes = msg.getBytes();
-        int length = bytes.length;
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        outputStream.write((byte) 0x81); // Text frame
-
-        if (length <= 125) {
-            outputStream.write((byte) (length | 0x80)); // Set the mask bit
-        } else if (length <= 65535) {
-            outputStream.write((byte) (126 | 0x80)); // Set the mask bit
-            outputStream.write((length >>> 8) & 0xFF);
-            outputStream.write(length & 0xFF);
-        } else {
-            outputStream.write((byte) (127 | 0x80)); // Set the mask bit
-            outputStream.write(new byte[]{0, 0, 0, 0}); // 4 high-order bytes set to 0 for lengths in the range of an int
-            outputStream.write((length >>> 24) & 0xFF);
-            outputStream.write((length >>> 16) & 0xFF);
-            outputStream.write((length >>> 8) & 0xFF);
-            outputStream.write(length & 0xFF);
+    public void send(String msg) {
+        if (isClosed) {
+            throw new IllegalStateException("WebSocket is closed.");
         }
+        try {
+            byte[] bytes = msg.getBytes();
+            int length = bytes.length;
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            outputStream.write((byte) 0x81); // Text frame
 
-        // Masking key
-        byte[] maskingKey = new byte[]{0x00, 0x00, 0x00, 0x00};
-        outputStream.write(maskingKey);
+            if (length <= 125) {
+                outputStream.write((byte) (length | 0x80)); // Set the mask bit
+            } else if (length <= 65535) {
+                outputStream.write((byte) (126 | 0x80)); // Set the mask bit
+                outputStream.write((length >>> 8) & 0xFF);
+                outputStream.write(length & 0xFF);
+            } else {
+                outputStream.write((byte) (127 | 0x80)); // Set the mask bit
+                outputStream.write(new byte[]{0, 0, 0, 0}); // 4 high-order bytes set to 0 for lengths in the range of an int
+                outputStream.write((length >>> 24) & 0xFF);
+                outputStream.write((length >>> 16) & 0xFF);
+                outputStream.write((length >>> 8) & 0xFF);
+                outputStream.write(length & 0xFF);
+            }
 
-        for (int i = 0; i < length; i++) {
-            outputStream.write((byte) (bytes[i] ^ maskingKey[i % 4])); // Apply the mask
+            // Masking key
+            byte[] maskingKey = new byte[]{0x00, 0x00, 0x00, 0x00};
+            outputStream.write(maskingKey);
+
+            for (int i = 0; i < length; i++) {
+                outputStream.write((byte) (bytes[i] ^ maskingKey[i % 4])); // Apply the mask
+            }
+
+            byte[] data = outputStream.toByteArray();
+            this.outputStream.write(data);
+        } catch (Exception ex) {
+            isClosed = true;
+            throw new IllegalStateException("WebSocket is closed.");
         }
-
-        byte[] data = outputStream.toByteArray();
-        this.outputStream.write(data);
     }
 
     public String read() {
+        if (isClosed) {
+            return null;
+        }
         try {
             WebSocketMachine machine = new WebSocketMachine();
             while (true) {
                 int b = inputStream.read();
                 if (b == -1) {
-                    return null;
+                    throw new IOException("WebSocket closed.");
                 }
                 WebSocketResult wsr = machine.update((byte) b);
                 if (wsr != null) {
                     if (wsr.type == 1) {
                         return new String(wsr.binary);
                     }
+                    if (wsr.type == 9) {
+                        outputStream.write(WebSocketConstructor.constructPongFrame(wsr.binary));
+                    }
+                    if (wsr.type == 8) {
+                        outputStream.write(WebSocketConstructor.constructCloseFrame(wsr.binary));
+                        throw new IOException("WebSocket closed.");
+                    }
                 }
             }
         } catch (Exception ex) {
+            isClosed = true;
             return null;
         }
     }
 
-//    public static void main(String[] args) throws IOException {
-//        WebSocketClient client = new WebSocketClient("wss://echo.websocket.events/");
-//        client.send("hello?");
-//        System.out.println(client.read());
-//    }
+    public void close() throws IOException {
+        if (!isClosed) {
+            byte[] statusCodeBytes = new byte[]{(byte) 0x03, (byte) 0xE8};
+            outputStream.write(WebSocketConstructor.constructCloseFrame(statusCodeBytes));
+            isClosed = true;
+        }
+    }
+
+    public boolean isClosed() {
+        return isClosed;
+    }
 }

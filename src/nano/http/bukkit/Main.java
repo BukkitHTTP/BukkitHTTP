@@ -7,9 +7,6 @@ import nano.http.d2.console.Console;
 import nano.http.d2.console.Logger;
 import nano.http.d2.core.NanoHTTPd;
 import nano.http.d2.core.thread.NanoPool;
-import nano.http.d2.core.ws.WebSocket;
-import nano.http.d2.core.ws.impl.DebugWebSocket;
-import nano.http.d2.core.ws.impl.WebSocketServer;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.hooks.impls.EmptySock;
 
