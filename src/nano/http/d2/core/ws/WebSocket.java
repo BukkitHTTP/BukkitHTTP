@@ -42,6 +42,9 @@ public abstract class WebSocket implements Runnable {
                         case 1:
                             onMessage(new String(result.binary));
                             break;
+                        case 2:
+                            onBinaryMessage(result.binary);
+                            break;
                     }
                 }
             }
@@ -110,7 +113,8 @@ public abstract class WebSocket implements Runnable {
 
     public void close() {
         try {
-            output.write(WebSocketConstructor.constructCloseFrame(new byte[0]));
+            byte[] statusCodeBytes = new byte[]{(byte) 0x03, (byte) 0xE8};
+            output.write(WebSocketConstructor.constructCloseFrame(statusCodeBytes));
             onClose_();
         } catch (Exception e) {
             onError_();
