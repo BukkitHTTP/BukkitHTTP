@@ -373,9 +373,12 @@ public class HTTPSession implements Runnable {
      * The full path to the saved file is returned.
      */
     @SuppressWarnings("IOStreamConstructor")
-    private String saveTmpFile(byte[] b, int offset, int len) {
+    private String saveTmpFile(byte[] b, int offset, int len) throws IOException {
         String path = "";
         if (len > 0) {
+            if (len > 1024 * 1024 * 10) { // 10MB
+                throw new IOException("File too big, sized " + len + " bytes. Expected less than 10MB.");
+            }
             String tmpdir = System.getProperty("java.io.tmpdir");
             try {
                 File temp = File.createTempFile("NanoHTTPd", "", new File(tmpdir));
@@ -384,7 +387,7 @@ public class HTTPSession implements Runnable {
                 fstream.close();
                 path = temp.getAbsolutePath();
             } catch (Exception e) { // Catch exception if any
-                Logger.error("Error: " + e.getMessage());
+                throw new IOException(e.getMessage());
             }
         }
         return path;
