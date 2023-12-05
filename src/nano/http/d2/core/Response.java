@@ -1,6 +1,9 @@
 package nano.http.d2.core;
 
+import nano.http.d2.consts.Mime;
+import nano.http.d2.consts.Status;
 import nano.http.d2.hooks.HookManager;
+import nano.http.d2.json.NanoJSON;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -46,6 +49,13 @@ public class Response {
      */
     public Response(String status, String mimeType, String txt) {
         this(status, mimeType, new ByteArrayInputStream(txt.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    /**
+     * A quick constructor for json response.
+     */
+    public Response(Object dto) {
+        this(Status.HTTP_OK, Mime.MIME_JSON, new NanoJSON(dto).toString());
     }
 
     /**

@@ -1,5 +1,7 @@
 package nano.http.d2.core.ws.impl;
 
+import nano.http.d2.console.Logger;
+
 import java.io.ByteArrayOutputStream;
 
 public class WebSocketMachine {
@@ -73,8 +75,10 @@ public class WebSocketMachine {
 
     private byte[] update5(byte b) {
         if (payloadData == null) {
-            if (payloadLength > Integer.MAX_VALUE)
+            if (payloadLength > 2 * 1024 * 1024) // 2MB
+            {
                 throw new RuntimeException("Payload too large");
+            }
             payloadData = new byte[(int) payloadLength];
         }
         payloadData[ptr5++] = b;

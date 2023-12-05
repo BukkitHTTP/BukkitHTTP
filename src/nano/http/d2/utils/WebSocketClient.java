@@ -152,6 +152,32 @@ public class WebSocketClient {
         }
     }
 
+    @SuppressWarnings("ALL")
+    public void sendTestFrame() {
+        if (true) {
+            throw new RuntimeException("LEGAL WARNING: By modifying this code, you agree that the author is not responsible for any consequences caused by your modification.");
+            // The following code serves as a self-test for the NanoWS library. You would not normally use it, unless you want to test the library yourself.
+        }
+        if (isClosed) {
+            throw new IllegalStateException("WebSocket is closed.");
+        }
+        try {
+            outputStream.write((byte) 0x81); // Text frame
+            int length = 0x7FFFFFFF; // Overflow
+            outputStream.write((byte) (127 | 0x80)); // Set the mask bit
+            outputStream.write(new byte[]{0, 0, 0, 0}); // 4 high-order bytes set to 0 for lengths in the range of an int
+            outputStream.write((length >>> 24) & 0xFF);
+            outputStream.write((length >>> 16) & 0xFF);
+            outputStream.write((length >>> 8) & 0xFF);
+            outputStream.write(length & 0xFF);
+            while (true) {
+                outputStream.write(0);
+            }
+        } catch (Exception ignored) {
+            isClosed = true;
+        }
+    }
+
     public boolean isClosed() {
         return isClosed;
     }

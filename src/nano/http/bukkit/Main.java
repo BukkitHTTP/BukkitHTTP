@@ -16,7 +16,7 @@ import java.io.FileWriter;
 import java.util.Properties;
 
 public class Main {
-    public static final String VERSION = "2.43 _Lovely_ alpha";
+    public static final String VERSION = "2.43 _Lovely_ beta";
     public static final Bukkit_Router router = new Bukkit_Router();
     public static NanoHTTPd server;
 
@@ -100,6 +100,8 @@ public class Main {
         // Enjoy!
         Logger.info("Done! (" + (System.currentTimeMillis() - start) + "ms)" + " Listening on port " + port);
 
-        // WebSocketServer.register("/debug", DebugWebSocket.class);
+//        WebSocketServer.register("/debug", DebugWebSocket.class);
+//        WebSocketClient wsc = new WebSocketClient("ws://localhost:80/debug");
+//        wsc.sendTestFrame();
     }
 }
