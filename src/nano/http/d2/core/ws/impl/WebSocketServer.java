@@ -16,8 +16,8 @@ import java.util.concurrent.Executors;
 
 @SuppressWarnings("JavaReflectionMemberAccess")
 public class WebSocketServer {
-    public static ExecutorService executor = Executors.newCachedThreadPool();
     private static final Map<String, Class<? extends WebSocket>> registered = new ConcurrentHashMap<>();
+    public static ExecutorService executor = Executors.newCachedThreadPool();
 
     static {
         try {
