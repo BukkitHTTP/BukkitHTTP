@@ -27,7 +27,7 @@ public class Reflectior<T> {
                     continue;
                 }
                 f.setAccessible(true);
-                sb.append(f.get(o).toString().replaceAll("\"", "^"));
+                sb.append(String.valueOf(f.get(o)).replaceAll("\"", "^"));
                 sb.append("\",\"");
             }
             sb.deleteCharAt(sb.length() - 1);

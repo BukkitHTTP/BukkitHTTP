@@ -1,13 +1,22 @@
 package nano.http.d2.core.ws.impl;
 
-import nano.http.d2.console.Logger;
-
 import java.io.ByteArrayOutputStream;
 
 public class WebSocketMachine {
     int state = 0;
     boolean fin = false;
     int opcode = 0;
+    boolean mask = false;
+    long payloadLength = 0;
+    int ptr2 = 0;
+    byte[] payloadLength2 = new byte[2];
+    int ptr3 = 0;
+    byte[] payloadLength3 = new byte[8];
+    int ptr4 = 0;
+    byte[] maskingKey = new byte[4];
+    int ptr5 = 0;
+    byte[] payloadData = null;
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
     private void update0(byte b) {
         fin = (b & 0x80) != 0;
@@ -17,9 +26,6 @@ public class WebSocketMachine {
         }
         state = 1;
     }
-
-    boolean mask = false;
-    long payloadLength = 0;
 
     private void update1(byte b) {
         mask = (b & 0x80) != 0;
@@ -33,9 +39,6 @@ public class WebSocketMachine {
         }
     }
 
-    int ptr2 = 0;
-    byte[] payloadLength2 = new byte[2];
-
     private void update2(byte b) {
         payloadLength2[ptr2++] = b;
         if (ptr2 == 2) {
@@ -43,9 +46,6 @@ public class WebSocketMachine {
             state = mask ? 4 : 5;
         }
     }
-
-    int ptr3 = 0;
-    byte[] payloadLength3 = new byte[8];
 
     private void update3(byte b) {
         payloadLength3[ptr3++] = b;
@@ -60,18 +60,12 @@ public class WebSocketMachine {
         }
     }
 
-    int ptr4 = 0;
-    byte[] maskingKey = new byte[4];
-
     private void update4(byte b) {
         maskingKey[ptr4++] = b;
         if (ptr4 == 4) {
             state = 5;
         }
     }
-
-    int ptr5 = 0;
-    byte[] payloadData = null;
 
     private byte[] update5(byte b) {
         if (payloadData == null) {
@@ -92,8 +86,6 @@ public class WebSocketMachine {
         }
         return null;
     }
-
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
     private byte[] reset() {
         state = 0;

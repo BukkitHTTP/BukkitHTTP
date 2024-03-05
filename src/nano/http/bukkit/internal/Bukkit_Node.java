@@ -19,6 +19,7 @@ public class Bukkit_Node {
     final Method serve;
     final Method fallback;
     final String name;
+    boolean disabled = false;
 
     public Bukkit_Node(String uri, ClassLoader classLoader, String classPath, String name) throws Exception {
         this.uri = uri;
@@ -36,6 +37,8 @@ public class Bukkit_Node {
     }
 
     public void onDisable() throws Throwable {
+        if (disabled) return;
+        disabled = true;
         onDisable.invoke(serverProvider);
     }
 

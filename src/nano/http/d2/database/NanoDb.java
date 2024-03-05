@@ -90,7 +90,7 @@ public class NanoDb<K, V> {
         sb.append("\"").append(indexName).append("\",");
         sb.append(ref.title(l));
         for (K now : index) {
-            sb.append("\"").append(now.toString()).append("\",");
+            sb.append("\"").append(now).append("\",");
             sb.append(ref.serl(this.query(now)));
         }
         locked.set(false);
