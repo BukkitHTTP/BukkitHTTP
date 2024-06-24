@@ -11,7 +11,7 @@ import java.io.File;
 // This is a stub file used to test the plugin.
 @SuppressWarnings("unused")
 public class DebugMain {
-    public static void debug(Class<?> plugin, String uri, int port) throws Exception {
+    public static void debug(Class<?> plugin, String uri, int port, boolean disableFirewall) throws Exception {
         Bukkit_Node node = new Bukkit_Node(uri, plugin.getClassLoader(), plugin.getName(), "Debug");
         DebugRouter router = new DebugRouter(node, uri);
         try {
@@ -35,12 +35,18 @@ public class DebugMain {
                 Logger.error("Error while disabling plugin.", e);
             }
         }));
-        HookManager.socketHook = (socket) -> true;
+        if (disableFirewall) {
+            HookManager.socketHook = (socket) -> true;
+        }
         Logger.info("Debug server started on port " + port + ".");
         Logger.info("Use command /stop to stop.");
     }
 
     public static void debug(Class<?> plugin, String uri) throws Exception {
         debug(plugin, uri, 80);
+    }
+
+    public static void debug(Class<?> plugin, String uri, int port) throws Exception {
+        debug(plugin, uri, port, true);
     }
 }

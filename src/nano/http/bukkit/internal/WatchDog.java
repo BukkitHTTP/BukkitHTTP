@@ -10,6 +10,7 @@ import java.util.Map;
 
 public class WatchDog implements Runnable {
     private static final String[] msg = {"Don't be sad, have a hug!", "Oops...But why?", "I'm sorry, I'm sorry, I'm sorry!", "That's not a bug, that's a feature!", "Happy debugging!", "Get a cup of coffee!"};
+    private static final OperatingSystemMXBean os_mxb = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
     public static void dump() {
         Logger.info("[WatchDog] Dumping threads...");
@@ -79,7 +80,6 @@ public class WatchDog implements Runnable {
 
     @Override
     public void run() {
-        OperatingSystemMXBean os_mxb = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         int count = 0;
         while (true) {
             double cpuLoad = os_mxb.getSystemCpuLoad();

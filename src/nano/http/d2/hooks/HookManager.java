@@ -1,13 +1,7 @@
 package nano.http.d2.hooks;
 
-import nano.http.d2.hooks.impls.DefaultFile;
-import nano.http.d2.hooks.impls.DefaultHeader;
-import nano.http.d2.hooks.impls.DefaultRequest;
-import nano.http.d2.hooks.impls.DefaultSock;
-import nano.http.d2.hooks.interfaces.FileHookProvider;
-import nano.http.d2.hooks.interfaces.HeaderHookProvider;
-import nano.http.d2.hooks.interfaces.RequestHookProvider;
-import nano.http.d2.hooks.interfaces.SocketHookProvider;
+import nano.http.d2.hooks.impls.*;
+import nano.http.d2.hooks.interfaces.*;
 
 /**
  * Important! Use this class if and only if you know what you're doing.
@@ -34,10 +28,14 @@ public class HookManager {
     // It can be used to work as a firewall, as the default implementation is.
 
     public static FileHookProvider fileHook = new DefaultFile();
-
     // This hook is called when a file is about to be uploaded.
     // By default, we allow files to be uploaded only if the uri ends with upload.html.
     // You may also make use of this hook to disable file uploads.
+
+    public static ProxyHookProvider proxyHook = new DefaultProxy();
+    // This hook is called when a proxy request is received.
+    // By default, we reject all proxy requests.
+
     public static void invoke() {
     }
     // This method is used to make sure that the class is loaded.
