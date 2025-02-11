@@ -2,7 +2,6 @@ package nano.http.d2.core;
 
 import nano.http.d2.consts.Mime;
 import nano.http.d2.consts.Status;
-import nano.http.d2.core.proxy.NProxy;
 import nano.http.d2.core.thread.NanoPool;
 import nano.http.d2.core.ws.impl.WebSocketServer;
 import nano.http.d2.hooks.HookManager;
@@ -107,6 +106,10 @@ public class HTTPSession implements Runnable {
                 size = 0;
             }
 
+            if (size > 100000000) {
+                sendError(Status.HTTP_BADREQUEST, "BAD REQUEST: Content length is too big.");
+            }
+
             // Now read all the body and write it to f
             buf = new byte[512];
             while (rlen >= 0 && size > 0) {
@@ -177,10 +180,6 @@ public class HTTPSession implements Runnable {
             }
 
             if (WebSocketServer.checkWsProtocol(header, method, mySocket, parms, uri)) {
-                return;
-            }
-
-            if (NProxy.checkProxyProtocol(header, method, mySocket, parms, uri)) {
                 return;
             }
 
@@ -458,7 +457,7 @@ public class HTTPSession implements Runnable {
     /**
      * Sends given response to the socket.
      */
-    private void sendResponse(String status, String mime, Properties header, InputStream data) {
+    public void sendResponse(String status, String mime, Properties header, InputStream data) {
         try {
             if (status == null) {
                 throw new Error("sendResponse(): Status can't be null.");

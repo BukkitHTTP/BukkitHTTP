@@ -1,7 +1,10 @@
 package nano.http.d2.utils;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 @SuppressWarnings("unused")
 public class Encoding {
@@ -15,7 +18,7 @@ public class Encoding {
 
     public static String deURL(String origin) {
         try {
-            return java.net.URLDecoder.decode(origin, "UTF-8");
+            return URLDecoder.decode(origin, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             return "";
         }
@@ -23,8 +26,22 @@ public class Encoding {
 
     public static String enURL(String origin) {
         try {
-            return java.net.URLEncoder.encode(origin, "UTF-8");
+            return URLEncoder.encode(origin, "UTF-8");
         } catch (UnsupportedEncodingException e) {
+            return "";
+        }
+    }
+
+    public static String enMd5(String origin) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] bytes = md.digest(origin.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) {
+                sb.append(String.format("%02X", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
             return "";
         }
     }

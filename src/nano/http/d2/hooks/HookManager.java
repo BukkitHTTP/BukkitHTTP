@@ -32,10 +32,6 @@ public class HookManager {
     // By default, we allow files to be uploaded only if the uri ends with upload.html.
     // You may also make use of this hook to disable file uploads.
 
-    public static ProxyHookProvider proxyHook = new DefaultProxy();
-    // This hook is called when a proxy request is received.
-    // By default, we reject all proxy requests.
-
     public static void invoke() {
     }
     // This method is used to make sure that the class is loaded.
