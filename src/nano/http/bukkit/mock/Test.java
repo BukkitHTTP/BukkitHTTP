@@ -5,6 +5,7 @@ import nano.http.d2.consts.Status;
 import nano.http.d2.core.Response;
 import nano.http.d2.serve.ServeProvider;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.io.ByteArrayOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -24,7 +25,7 @@ public class Test {
             return new Response(Status.HTTP_OK, Mime.MIME_PLAINTEXT, "GG");
         });
 
-        HttpURLConnection connection = (HttpURLConnection) new URL("http://example.com/?q=ret-1-plz").openConnection();
+        HttpURLConnection connection = (HttpURLConnection) new URL("https://example.com/?q=ret-1-plz").openConnection();
         connection.setRequestMethod("GET");
         connection.setDoOutput(true);
         connection.setDoInput(true);

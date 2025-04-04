@@ -4,16 +4,18 @@ import nano.http.d2.core.ParmsDecoder;
 import nano.http.d2.core.Response;
 import nano.http.d2.serve.ServeProvider;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.Certificate;
 import java.util.Properties;
 
-public class ModifiedCon extends HttpURLConnection {
+public class ModifiedCon extends HttpsURLConnection {
     private final Proxy proxy;
     private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -89,5 +91,20 @@ public class ModifiedCon extends HttpURLConnection {
     @Override
     public OutputStream getOutputStream() {
         return outputStream;
+    }
+
+    @Override
+    public String getCipherSuite() {
+        return "mocked";
+    }
+
+    @Override
+    public Certificate[] getLocalCertificates() {
+        return new Certificate[0];
+    }
+
+    @Override
+    public Certificate[] getServerCertificates() {
+        return new Certificate[0];
     }
 }

@@ -18,13 +18,20 @@ public class InjectURI implements URLStreamHandlerFactory {
 
     public static void inject() {
         try {
+            URL.setURLStreamHandlerFactory(new InjectURI(null));
+            return;
+        } catch (Error ignored) {
+        }
+
+        try {
             Field field = URL.class.getDeclaredField("factory");
             MakeAccessible.makeAccessible(field);
             URLStreamHandlerFactory factory = (URLStreamHandlerFactory) field.get(null);
             if (factory instanceof InjectURI) {
                 return;
             }
-            field.set(null, new InjectURI(factory));
+            field.set(null, null);
+            URL.setURLStreamHandlerFactory(new InjectURI(factory));
         } catch (Exception ex) {
             Logger.error("Failed to inject URLStreamHandlerFactory", ex);
         }
