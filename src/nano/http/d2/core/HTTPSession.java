@@ -7,7 +7,6 @@ import nano.http.d2.core.ws.impl.WebSocketServer;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.serve.ServeProvider;
 import nano.http.d2.session.SessionManager;
-import nano.http.d2.utils.Encoding;
 import nano.http.d2.utils.Misc;
 
 import java.io.*;
@@ -31,6 +30,7 @@ public class HTTPSession implements Runnable {
         NanoPool.submit(this);
     }
 
+    @Override
     public void run() {
         try {
             if (isHighDemand) {
@@ -175,7 +175,7 @@ public class HTTPSession implements Runnable {
                         read = br.read(pbuf);
                     }
                     postLine = new StringBuilder(postLine.toString().trim());
-                    decodeParms(postLine.toString(), parms);
+                    ParmsDecoder.decodeParms(postLine.toString(), parms);
                 }
             }
 
@@ -234,10 +234,10 @@ public class HTTPSession implements Runnable {
             // Decode parameters from the URI
             int qmi = uri.indexOf('?');
             if (qmi >= 0) {
-                decodeParms(uri.substring(qmi + 1), parms);
-                uri = decodePercent(uri.substring(0, qmi));
+                ParmsDecoder.decodeParms(uri.substring(qmi + 1), parms);
+                uri = ParmsDecoder.decodePercent(uri.substring(0, qmi));
             } else {
-                uri = decodePercent(uri);
+                uri = ParmsDecoder.decodePercent(uri);
             }
 
             // If there's another token, it's protocol version,
@@ -408,41 +408,6 @@ public class HTTPSession implements Runnable {
             }
         }
         return i + 1;
-    }
-
-    /**
-     * Decodes the percent encoding scheme. <br/>
-     * For example: "an+example%20string" -> "an example string"
-     * Modified - added support for Chinese characters
-     */
-    private String decodePercent(String str) {
-        return Encoding.deURL(str);
-    }
-
-    /**
-     * Decodes parameters in percent-encoded URI-format
-     * ( e.g. "name=Jack%20Daniels&pass=Single%20Malt" ) and
-     * adds them to given Properties. NOTE: this doesn't support multiple
-     * identical keys due to the simplicity of Properties -- if you need multiples,
-     * you might want to replace the Properties with a Hashtable of Vectors or such.
-     */
-    private void decodeParms(String parms, Properties p) {
-        if (parms == null) {
-            return;
-        }
-        if (parms.startsWith("{")) {
-            p.put("json", parms);
-            return;
-        }
-        StringTokenizer st = new StringTokenizer(parms, "&");
-        while (st.hasMoreTokens()) {
-            String e = st.nextToken();
-            int sep = e.indexOf('=');
-            String dec = decodePercent((sep >= 0) ? e.substring(0, sep) : e);
-            if (dec != null) {
-                p.put(dec.trim(), (sep >= 0) ? decodePercent(e.substring(sep + 1)) : "");
-            }
-        }
     }
 
     /**
