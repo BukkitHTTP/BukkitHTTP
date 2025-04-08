@@ -51,7 +51,7 @@ public class InjectedHandler extends URLStreamHandler {
             URLStreamHandler realHandler = getRealHandler();
             Method openConnection = realHandler.getClass().getDeclaredMethod("openConnection", URL.class, Proxy.class);
             MakeAccessible.makeAccessible(openConnection);
-            super.openConnection(u, p);
+            openConnection.invoke(realHandler, u, p);
             return (URLConnection) openConnection.invoke(realHandler, u, p);
         } catch (Exception e) {
             throw new IOException(e);
