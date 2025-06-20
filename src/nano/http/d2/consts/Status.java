@@ -9,6 +9,7 @@ public class Status {
             HTTP_OK = "200 OK",
             HTTP_NOCONTENT = "204 No Content",
             HTTP_PERMAREDIRECT = "301 Moved Permanently",
+            HTTP_REDIRECT_AS_GET = "303 See Other",
             HTTP_REDIRECT = "307 Temporary Redirect",
             HTTP_FORBIDDEN = "403 Forbidden",
             HTTP_NOTFOUND = "404 Not Found",

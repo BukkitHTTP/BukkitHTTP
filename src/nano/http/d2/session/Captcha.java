@@ -94,9 +94,9 @@ public class Captcha {
                 paint.drawLine(rdm.nextInt(w), rdm.nextInt(h), rdm.nextInt(w), rdm.nextInt(h));
             }
 
+            paint.dispose();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(bufferedImage, "jpeg", baos);
-            baos.close();
             return baos.toByteArray();
         } catch (Exception e) {
             return null;

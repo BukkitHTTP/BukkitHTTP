@@ -62,6 +62,10 @@ public class NanoDb<K, V> {
         data.remove(key);
     }
 
+    public void notifyDirty() {
+        scheduleSave();
+    }
+
     public void set(K key, V value) {
         scheduleSave();
         data.put(key, value);

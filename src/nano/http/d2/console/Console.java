@@ -9,9 +9,19 @@ public class Console {
     private static final ConcurrentHashMap<String, Runnable> commands = new ConcurrentHashMap<>();
     private static String result;
     private static int Tid = 0;
+    public static boolean magic = true;
 
     static {
         Thread t = new Thread(() -> {
+            try {
+                Thread.sleep(2000L);
+            } catch (Exception ignored) {
+            }
+            if (!magic) {
+                Logger.info("Console is disabled D:");
+                return;
+            }
+            Logger.info("Console start-up finished.");
             Scanner s = new Scanner(System.in);
             try {
                 while (true) {

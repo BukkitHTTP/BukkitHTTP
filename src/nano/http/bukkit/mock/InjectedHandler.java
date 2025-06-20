@@ -40,7 +40,6 @@ public class InjectedHandler extends URLStreamHandler {
         if (provider == null) {
             return byReal(u, p);
         }
-
         Properties query = new Properties();
         ParmsDecoder.decodeParms(u.getQuery(), query);
         return new ModifiedCon(u, p, query, provider, u.getPath());
@@ -51,7 +50,6 @@ public class InjectedHandler extends URLStreamHandler {
             URLStreamHandler realHandler = getRealHandler();
             Method openConnection = realHandler.getClass().getDeclaredMethod("openConnection", URL.class, Proxy.class);
             MakeAccessible.makeAccessible(openConnection);
-            super.openConnection(u, p);
             return (URLConnection) openConnection.invoke(realHandler, u, p);
         } catch (Exception e) {
             throw new IOException(e);

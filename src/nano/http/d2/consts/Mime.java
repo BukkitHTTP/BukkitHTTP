@@ -11,6 +11,8 @@ public class Mime {
             MIME_PNG = "image/png",
             MIME_PLAINTEXT = "text/plain;encoding=utf-8",
             MIME_HTML = "text/html;encoding=utf-8",
+            MIME_CSS = "text/css;encoding=utf-8",
+            MIME_JS = "application/javascript;encoding=utf-8",
             MIME_DEFAULT_BINARY = "application/octet-stream",
             MIME_XML = "text/xml;encoding=utf-8",
             MIME_JSON = "application/json;encoding=utf-8";
