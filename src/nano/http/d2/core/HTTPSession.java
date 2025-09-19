@@ -268,7 +268,7 @@ public class HTTPSession implements Runnable {
     private void decodeMultipartData(String boundary, byte[] fbuf, BufferedReader in, Properties parms, Properties files, String uri)
             throws InterruptedException {
         try {
-            int[] bpositions = getBoundaryPositions(fbuf, boundary.getBytes());
+            int[] bpositions = getBoundaryPositions(fbuf, boundary.getBytes(StandardCharsets.UTF_8));
             int boundarycount = 1;
             String mpline = in.readLine();
             while (mpline != null) {
@@ -415,7 +415,7 @@ public class HTTPSession implements Runnable {
      * throws InterruptedException to stop further request processing.
      */
     private void sendError(String status, String msg) throws InterruptedException {
-        sendResponse(status, Mime.MIME_PLAINTEXT, null, new ByteArrayInputStream(msg.getBytes()));
+        sendResponse(status, Mime.MIME_PLAINTEXT, null, new ByteArrayInputStream((Misc.BOM + msg).getBytes(StandardCharsets.UTF_8)));
         throw new InterruptedException();
     }
 

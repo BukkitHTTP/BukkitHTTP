@@ -1,10 +1,11 @@
 package nano.http.d2.core.ws.impl;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 public class WebSocketConstructor {
     public static byte[] constructStringFrame(String message) {
-        byte[] bytes = message.getBytes();
+        byte[] bytes = message.getBytes(StandardCharsets.UTF_8);
         byte[] result;
         if (bytes.length <= 125) {
             result = new byte[bytes.length + 2];

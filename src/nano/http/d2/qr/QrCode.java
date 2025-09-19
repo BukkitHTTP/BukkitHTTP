@@ -837,4 +837,15 @@ public final class QrCode {
             return null;
         }
     }
+
+    public String asString() {
+        StringBuilder sb = new StringBuilder();
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                sb.append(getModule(x, y) ? "░░░" : "███");
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
+    }
 }

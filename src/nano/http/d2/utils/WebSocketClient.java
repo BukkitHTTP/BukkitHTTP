@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class WebSocketClient {
@@ -60,7 +61,7 @@ public class WebSocketClient {
             socket = new Socket(p);
             socket.connect(new InetSocketAddress(ip, port));
         }
-        socket.getOutputStream().write(base.replace("{URI}", path).replace("{HOST}", host).getBytes());
+        socket.getOutputStream().write(base.replace("{URI}", path).replace("{HOST}", host).getBytes(StandardCharsets.UTF_8));
         Scanner scanner = new Scanner(socket.getInputStream());
         boolean flag = false;
         while (scanner.hasNextLine()) {
@@ -84,7 +85,7 @@ public class WebSocketClient {
             throw new IllegalStateException("WebSocket is closed.");
         }
         try {
-            byte[] bytes = msg.getBytes();
+            byte[] bytes = msg.getBytes(StandardCharsets.UTF_8);
             int length = bytes.length;
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             outputStream.write((byte) 0x81); // Text frame

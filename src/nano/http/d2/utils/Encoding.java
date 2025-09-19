@@ -32,9 +32,18 @@ public class Encoding {
         }
     }
 
+    private static final ThreadLocal<MessageDigest> md5Local = ThreadLocal.withInitial(() -> {
+        try {
+            return MessageDigest.getInstance("MD5");
+        } catch (Exception e) {
+            return null;
+        }
+    });
+
     public static String enMd5(String origin) {
         try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
+            MessageDigest md = md5Local.get();
+            md.reset();
             byte[] bytes = md.digest(origin.getBytes(StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
             for (byte b : bytes) {

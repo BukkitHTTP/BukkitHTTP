@@ -23,7 +23,7 @@ public class NanoPool {
         return executor != null;
     }
 
-    private static void init() {
+    private static synchronized void init() {
         if (executor == null) {
             executor = new NanoExecutor(CORE_SIZE, ERROR_SIZE);
         }

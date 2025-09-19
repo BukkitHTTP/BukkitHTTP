@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SessionManager {
     private static final Map<String, Session> sessions = new ConcurrentHashMap<>();
     private static final Random random = new Random();
+    public static boolean doGc = true;
 
     public static Session getSession(Properties header) {
         if (!header.containsKey("cookie")) {
@@ -73,7 +74,9 @@ public class SessionManager {
             session.lastAccess = System.currentTimeMillis();
             return session;
         }
-        gc();
+        if (doGc) {
+            gc();
+        }
         Session session = new Session();
         sessions.put(sessionValue, session);
         return session;
