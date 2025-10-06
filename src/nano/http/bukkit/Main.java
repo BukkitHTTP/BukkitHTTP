@@ -6,7 +6,6 @@ import nano.http.bukkit.internal.cipher.KeyGen;
 import nano.http.d2.console.Console;
 import nano.http.d2.console.Logger;
 import nano.http.d2.core.NanoHTTPd;
-import nano.http.d2.core.thread.NanoPool;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.hooks.impls.EmptySock;
 
@@ -40,8 +39,6 @@ public class Main {
             pr.setProperty("port", "80");
             pr.setProperty("watchdog", "false");
             pr.setProperty("firewall", "false");
-            pr.setProperty("threads", "20");
-            pr.setProperty("errhandler-threads", "3");
             pr.store(new FileWriter(set), "BukkitHTTP Server Settings");
         }
         Properties pr = new Properties();
@@ -91,17 +88,11 @@ public class Main {
         // Some magic :P
         Runtime.getRuntime().addShutdownHook(new Thread(BukkitStop::doStop));
         HookManager.invoke();
-        NanoPool.setCoreSize(Integer.parseInt(pr.getProperty("threads")));
-        NanoPool.setErrorSize(Integer.parseInt(pr.getProperty("errhandler-threads")));
 
         // Start the server
         server = new NanoHTTPd(port, router);
 
         // Enjoy!
         Logger.info("Done! (" + (System.currentTimeMillis() - start) + "ms)" + " Listening on port " + port);
-
-//        WebSocketServer.register("/debug", DebugWebSocket.class);
-//        WebSocketClient wsc = new WebSocketClient("ws://localhost:80/debug");
-//        wsc.sendTestFrame();
     }
 }

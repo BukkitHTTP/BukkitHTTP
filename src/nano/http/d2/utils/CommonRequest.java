@@ -1,15 +1,13 @@
 package nano.http.d2.utils;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 @SuppressWarnings("unused")
-public class Request {
+public class CommonRequest {
     public static String get(String dest, Properties header) throws Exception {
         URL url = new URL(dest);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -19,14 +17,7 @@ public class Request {
                 con.setRequestProperty(s, header.getProperty(s));
             }
         }
-        BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-        StringBuilder sbf = new StringBuilder();
-        String temp;
-        while ((temp = br.readLine()) != null) {
-            sbf.append(temp);
-            sbf.append("\r\n");
-        }
-        return sbf.toString();
+        return new String(con.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
     public static byte[] getBytes(String dest, Properties header) throws Exception {
@@ -38,13 +29,7 @@ public class Request {
                 con.setRequestProperty(s, header.getProperty(s));
             }
         }
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int len;
-        while ((len = con.getInputStream().read(buffer)) != -1) {
-            baos.write(buffer, 0, len);
-        }
-        return baos.toByteArray();
+        return con.getInputStream().readAllBytes();
     }
 
     public static String post(String dest, String data, Properties header) throws Exception {
@@ -58,14 +43,33 @@ public class Request {
         }
         con.setDoOutput(true);
         con.getOutputStream().write(data.getBytes(StandardCharsets.UTF_8));
-        BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-        StringBuilder sbf = new StringBuilder();
-        String temp;
-        while ((temp = br.readLine()) != null) {
-            sbf.append(temp);
-            sbf.append("\r\n");
+        return new String(con.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+    }
+
+    public static String parmPost(String dest, Properties params, Properties header) throws Exception {
+        StringBuilder paramStr = new StringBuilder();
+        if (params != null) {
+            for (String s : params.stringPropertyNames()) {
+                if (!paramStr.isEmpty()) {
+                    paramStr.append("&");
+                }
+                paramStr.append(s).append("=").append(params.getProperty(s));
+            }
         }
-        return sbf.toString();
+        URL url = new URL(dest);
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        if (header != null) {
+            for (String s : header.stringPropertyNames()) {
+                con.setRequestProperty(s, header.getProperty(s));
+            }
+        }
+        con.setDoOutput(true);
+        byte[] requestBodyBytes = paramStr.toString().getBytes(StandardCharsets.UTF_8);
+        con.setRequestProperty("Content-Length", Integer.toString(requestBodyBytes.length));
+        con.getOutputStream().write(requestBodyBytes);
+        return new String(con.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
     public static String jsonPost(String dest, String data, Properties header) throws Exception {
@@ -82,19 +86,7 @@ public class Request {
         byte[] requestBodyBytes = data.getBytes(StandardCharsets.UTF_8);
         con.setRequestProperty("Content-Length", Integer.toString(requestBodyBytes.length));
         con.getOutputStream().write(requestBodyBytes);
-        BufferedReader br;
-        try {
-            br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-        } catch (Exception e) {
-            br = new BufferedReader(new InputStreamReader(con.getErrorStream(), StandardCharsets.UTF_8));
-        }
-        StringBuilder sbf = new StringBuilder();
-        String temp;
-        while ((temp = br.readLine()) != null) {
-            sbf.append(temp);
-            sbf.append("\r\n");
-        }
-        return sbf.toString();
+        return new String(con.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
     public static String filePost(String dest, String filename, String mime, byte[] data, Properties header) throws Exception {
@@ -120,18 +112,6 @@ public class Request {
         con.setRequestProperty("Content-Length", String.valueOf(requestBodyBytes.length));
         con.setDoOutput(true);
         con.getOutputStream().write(requestBodyBytes);
-        BufferedReader br;
-        try {
-            br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-        } catch (Exception e) {
-            br = new BufferedReader(new InputStreamReader(con.getErrorStream(), StandardCharsets.UTF_8));
-        }
-        StringBuilder sbf = new StringBuilder();
-        String temp;
-        while ((temp = br.readLine()) != null) {
-            sbf.append(temp);
-            sbf.append("\r\n");
-        }
-        return sbf.toString();
+        return new String(con.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 }

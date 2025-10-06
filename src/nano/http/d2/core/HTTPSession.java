@@ -2,7 +2,6 @@ package nano.http.d2.core;
 
 import nano.http.d2.consts.Mime;
 import nano.http.d2.consts.Status;
-import nano.http.d2.core.thread.NanoPool;
 import nano.http.d2.core.ws.impl.WebSocketServer;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.serve.ServeProvider;
@@ -13,6 +12,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -20,22 +20,19 @@ import java.util.zip.GZIPInputStream;
  * and returns the response.
  */
 public class HTTPSession implements Runnable {
+    private static final AtomicLong COUNTER = new AtomicLong(0);
     private final Socket mySocket;
     private final ServeProvider myServer;
-    public boolean isHighDemand = false;
 
     public HTTPSession(Socket s, ServeProvider server) {
         mySocket = s;
         myServer = server;
-        NanoPool.submit(this);
+        Thread.ofVirtual().name("NanoHttp-V-Session-" + COUNTER.incrementAndGet()).start(this);
     }
 
     @Override
     public void run() {
         try {
-            if (isHighDemand) {
-                sendError(Status.HTTP_BADGATEWAY, "Server is busy - NanoHTTP");
-            }
             InputStream is = mySocket.getInputStream();
             if (is == null) {
                 return;
@@ -65,7 +62,6 @@ public class HTTPSession implements Runnable {
             String uri = pre.getProperty("uri");
 
             // Logger.info(method + " " + uri + " (" + mySocket.getInetAddress().getHostAddress() + ")");
-            // TODO Just a bookmark.
             long size = 0x7FFFFFFFFFFFFFFFL;
             String contentLength = header.getProperty("content-length");
             if (contentLength != null) {
@@ -106,7 +102,7 @@ public class HTTPSession implements Runnable {
                 size = 0;
             }
 
-            if (size > 100000000) {
+            if (size > 100_000_000) {
                 sendError(Status.HTTP_BADREQUEST, "BAD REQUEST: Content length is too big.");
             }
 
@@ -134,7 +130,7 @@ public class HTTPSession implements Runnable {
                     sendError(Status.HTTP_BADREQUEST, "BAD REQUEST: Content encoding " + encoding + " is not supported. Expected gzip or none.");
                 }
             } else {
-                br = new BufferedReader(new InputStreamReader(bin));
+                br = new BufferedReader(new InputStreamReader(bin, StandardCharsets.UTF_8));
             }
             assert br != null;
 
@@ -209,8 +205,7 @@ public class HTTPSession implements Runnable {
      * Decodes the sent headers and loads the data into
      * java Properties' key - value pairs
      */
-    private void decodeHeader(BufferedReader in, Properties pre, Properties parms, Properties header)
-            throws InterruptedException {
+    private void decodeHeader(BufferedReader in, Properties pre, Properties parms, Properties header) throws InterruptedException {
         try {
             // Read the request line
             String inLine = in.readLine();
@@ -265,8 +260,7 @@ public class HTTPSession implements Runnable {
      * Decodes the Multipart Body data and put it
      * into java Properties' key - value pairs.
      */
-    private void decodeMultipartData(String boundary, byte[] fbuf, BufferedReader in, Properties parms, Properties files, String uri)
-            throws InterruptedException {
+    private void decodeMultipartData(String boundary, byte[] fbuf, BufferedReader in, Properties parms, Properties files, String uri) throws InterruptedException {
         try {
             int[] bpositions = getBoundaryPositions(fbuf, boundary.getBytes(StandardCharsets.UTF_8));
             int boundarycount = 1;
@@ -437,7 +431,7 @@ public class HTTPSession implements Runnable {
             }
 
             if (header == null || header.getProperty("Date") == null) {
-                pw.print("Date: " + Misc.gmtFrmt.format(new Date()) + "\r\n");
+                pw.print("Date: " + Misc.gmtFmt.format(new Date()) + "\r\n");
             }
 
             if (header != null) {

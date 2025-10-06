@@ -1,6 +1,7 @@
 package nano.http.d2.utils;
 
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.StringTokenizer;
@@ -17,8 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Misc {
     public static final ConcurrentHashMap<String, String> theMimeTypes = new ConcurrentHashMap<>();
-    public static final SimpleDateFormat gmtFrmt;
-
+    public static final SimpleDateFormat gmtFmt;
     public static final String BOM = "\ufeff";
 
     static {
@@ -45,8 +45,8 @@ public class Misc {
     }
 
     static {
-        gmtFrmt = new SimpleDateFormat("E, d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
-        gmtFrmt.setTimeZone(TimeZone.getTimeZone("GMT"));
+        gmtFmt = new SimpleDateFormat("E, d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
+        gmtFmt.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
 
     public static String encodeUri(String uri) {
@@ -60,24 +60,11 @@ public class Misc {
                 newUri.append("%20");
             } else {
                 try {
-                    newUri.append(URLEncoder.encode(tok, "UTF-8"));
+                    newUri.append(URLEncoder.encode(tok, StandardCharsets.UTF_8));
                 } catch (Exception ignored) {
                 }
             }
         }
         return newUri.toString();
-    }
-
-    // 历史遗留问题，没法删，别用
-    @Deprecated
-    public static String chinese(String text) {
-        return "<html>\n" +
-                "<head>\n" +
-                "    <meta content=\"text/html; charset=UTF-8\" http-equiv=\"Content-Type\">\n" +
-                "</head>\n" +
-                "<body>\n" +
-                text +
-                "</body>\n" +
-                "</html>";
     }
 }

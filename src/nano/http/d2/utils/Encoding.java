@@ -17,19 +17,11 @@ public class Encoding {
     }
 
     public static String deURL(String origin) {
-        try {
-            return URLDecoder.decode(origin, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            return "";
-        }
+        return URLDecoder.decode(origin, StandardCharsets.UTF_8);
     }
 
     public static String enURL(String origin) {
-        try {
-            return URLEncoder.encode(origin, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            return "";
-        }
+        return URLEncoder.encode(origin, StandardCharsets.UTF_8);
     }
 
     private static final ThreadLocal<MessageDigest> md5Local = ThreadLocal.withInitial(() -> {

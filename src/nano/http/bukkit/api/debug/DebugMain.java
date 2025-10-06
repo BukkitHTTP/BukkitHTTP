@@ -4,7 +4,6 @@ import nano.http.bukkit.internal.Bukkit_Node;
 import nano.http.d2.console.Console;
 import nano.http.d2.console.Logger;
 import nano.http.d2.core.NanoHTTPd;
-import nano.http.d2.core.thread.NanoPool;
 import nano.http.d2.hooks.HookManager;
 
 import java.io.File;
@@ -43,8 +42,6 @@ public class DebugMain {
         if (disableFirewall) {
             HookManager.socketHook = (socket) -> true;
         }
-
-        NanoPool.setCoreSize(-10);
 
         Logger.info("Debug server started on port " + port + ".");
         Logger.info("Use command /stop to stop.");

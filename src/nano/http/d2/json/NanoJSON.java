@@ -1039,12 +1039,11 @@ public class NanoJSON {
     private void populateMap(Object dto) {
         Class<?> clazz = dto.getClass();
         try {
-            Field[] allFields = clazz.getDeclaredFields();
+            Field[] allFields = clazz.getFields();
             for (Field field : allFields) {
                 if (shouldIgnore(field)) {
                     continue;
                 }
-                field.setAccessible(true);
                 Object value = field.get(dto);
                 if (value != null) {
                     this.put(field.getName(), value);
