@@ -1,5 +1,7 @@
 package nano.http.d2.ai;
 
+import nano.http.d2.ai.data.ChatContext;
+import nano.http.d2.ai.data.Message;
 import nano.http.d2.json.JSONArray;
 import nano.http.d2.json.NanoJSON;
 
@@ -41,6 +43,8 @@ public class OpenRouter {
             con.setRequestMethod("POST");
             con.setRequestProperty("Authorization", "Bearer " + or_key);
             con.setRequestProperty("Content-Type", "application/json");
+            con.setRequestProperty("X-Title", "BukkitHTTP");
+            con.setRequestProperty("HTTP-Referer", "https://github.com/BukkitHTTP/BukkitHTTP");
             con.setDoOutput(true);
             JSONArray messages = new JSONArray();
 
@@ -126,6 +130,8 @@ public class OpenRouter {
                 con.setRequestMethod("POST");
                 con.setRequestProperty("Authorization", "Bearer " + or_key);
                 con.setRequestProperty("Content-Type", "application/json");
+                con.setRequestProperty("X-Title", "BukkitHTTP");
+                con.setRequestProperty("HTTP-Referer", "https://github.com/BukkitHTTP/BukkitHTTP");
                 con.setDoOutput(true);
                 JSONArray messages = new JSONArray();
 
@@ -206,7 +212,7 @@ public class OpenRouter {
                                     throw new Exception("No tool with name: " + funcName);
                                 }
 
-                                String strArg = args.getString("input");
+                                String strArg = args.getString(foundTool.queryName);
                                 String resp = foundTool.func.apply(strArg);
                                 Message toolMsg = new Message("tool", resp);
                                 toolMsg.trans = true;

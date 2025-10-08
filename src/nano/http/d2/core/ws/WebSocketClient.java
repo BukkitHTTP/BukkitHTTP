@@ -1,4 +1,4 @@
-package nano.http.d2.utils;
+package nano.http.d2.core.ws;
 
 import nano.http.d2.core.ws.impl.WebSocketConstructor;
 import nano.http.d2.core.ws.impl.WebSocketMachine;
@@ -16,12 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class WebSocketClient {
-    private static final String base = "GET {URI} HTTP/1.1\r\n" +
-            "Host: {HOST}\r\n" +
-            "Upgrade: websocket\r\n" +
-            "Connection: Upgrade\r\n" +
-            "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n" +
-            "Sec-WebSocket-Version: 13\r\n\r\n";
+    private static final String base = "GET {URI} HTTP/1.1\r\n" + "Host: {HOST}\r\n" + "Upgrade: websocket\r\n" + "Connection: Upgrade\r\n" + "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n" + "Sec-WebSocket-Version: 13\r\n\r\n";
     private final InputStream inputStream;
     private final OutputStream outputStream;
     private boolean isClosed = false;
@@ -227,32 +222,6 @@ public class WebSocketClient {
         if (!isClosed) {
             byte[] statusCodeBytes = new byte[]{(byte) 0x03, (byte) 0xE8};
             outputStream.write(WebSocketConstructor.constructCloseFrame(statusCodeBytes));
-            isClosed = true;
-        }
-    }
-
-    @SuppressWarnings("ALL")
-    public void sendTestFrame() {
-        if (true) {
-            throw new RuntimeException("LEGAL WARNING: By modifying this code, you agree that the author is not responsible for any consequences caused by your modification.");
-            // The following code serves as a self-test for the NanoWS library. You would not normally use it, unless you want to test the library yourself.
-        }
-        if (isClosed) {
-            throw new IllegalStateException("WebSocket is closed.");
-        }
-        try {
-            outputStream.write((byte) 0x81); // Text frame
-            int length = 0x7FFFFFFF; // Overflow
-            outputStream.write((byte) (127 | 0x80)); // Set the mask bit
-            outputStream.write(new byte[]{0, 0, 0, 0}); // 4 high-order bytes set to 0 for lengths in the range of an int
-            outputStream.write((length >>> 24) & 0xFF);
-            outputStream.write((length >>> 16) & 0xFF);
-            outputStream.write((length >>> 8) & 0xFF);
-            outputStream.write(length & 0xFF);
-            while (true) {
-                outputStream.write(0);
-            }
-        } catch (Exception ignored) {
             isClosed = true;
         }
     }

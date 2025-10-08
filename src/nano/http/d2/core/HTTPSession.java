@@ -2,7 +2,7 @@ package nano.http.d2.core;
 
 import nano.http.d2.consts.Mime;
 import nano.http.d2.consts.Status;
-import nano.http.d2.core.ws.impl.WebSocketServer;
+import nano.http.d2.core.ws.WebSocketServer;
 import nano.http.d2.hooks.HookManager;
 import nano.http.d2.serve.ServeProvider;
 import nano.http.d2.session.SessionManager;
@@ -62,7 +62,7 @@ public class HTTPSession implements Runnable {
             String uri = pre.getProperty("uri");
 
             // Logger.info(method + " " + uri + " (" + mySocket.getInetAddress().getHostAddress() + ")");
-            long size = 0x7FFFFFFFFFFFFFFFL;
+            long size = Long.MAX_VALUE;
             String contentLength = header.getProperty("content-length");
             if (contentLength != null) {
                 try {
@@ -98,7 +98,7 @@ public class HTTPSession implements Runnable {
             // expect the first byte of the body at the next read.
             if (splitbyte < rlen) {
                 size -= rlen - splitbyte + 1;
-            } else if (!sbfound || size == 0x7FFFFFFFFFFFFFFFL) {
+            } else if (!sbfound || size == Long.MAX_VALUE) {
                 size = 0;
             }
 
@@ -109,7 +109,7 @@ public class HTTPSession implements Runnable {
             // Now read all the body and write it to f
             buf = new byte[512];
             while (rlen >= 0 && size > 0) {
-                rlen = is.read(buf, 0, 512);
+                rlen = is.read(buf, 0, (int) Math.min(size, 512));
                 size -= rlen;
                 if (rlen > 0) {
                     f.write(buf, 0, rlen);
@@ -159,8 +159,10 @@ public class HTTPSession implements Runnable {
                     }
                     st.nextToken();
                     String boundary = st.nextToken();
-
                     decodeMultipartData(boundary, fbuf, br, parms, files, uri);
+                } else if ("text/event-stream".equalsIgnoreCase(contentType)) {
+
+                    return;
                 } else {
                     // Handle application/x-www-form-urlencoded and application/json
                     StringBuilder postLine = new StringBuilder();
@@ -241,7 +243,7 @@ public class HTTPSession implements Runnable {
             // case-insensitive and vary by client.
             if (st.hasMoreTokens()) {
                 String line = in.readLine();
-                while (line != null && line.trim().length() > 0) {
+                while (line != null && !line.trim().isEmpty()) {
                     int p = line.indexOf(':');
                     if (p >= 0) {
                         header.put(line.substring(0, p).trim().toLowerCase(), line.substring(p + 1).trim());

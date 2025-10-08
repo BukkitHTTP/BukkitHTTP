@@ -1,5 +1,6 @@
-package nano.http.d2.ai;
+package nano.http.d2.ai.data;
 
+import nano.http.d2.ai.Tool;
 import nano.http.d2.database.internal.SerlBridge;
 import nano.http.d2.database.internal.SerlClz;
 
@@ -13,7 +14,7 @@ public class ChatContext {
     public transient volatile boolean cancelled = false;
     public transient List<Tool> tools = new ArrayList<>();
 
-    public String model = "deepseek/deepseek-v3.2-exp:floor";
+    public String model = "deepseek/deepseek-chat-v3.1:floor";
     public boolean noThinking = true;
     public List<Message> messages = new ArrayList<>();
 

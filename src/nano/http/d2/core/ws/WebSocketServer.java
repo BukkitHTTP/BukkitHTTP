@@ -1,6 +1,4 @@
-package nano.http.d2.core.ws.impl;
-
-import nano.http.d2.core.ws.WebSocket;
+package nano.http.d2.core.ws;
 
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -15,7 +13,6 @@ public class WebSocketServer {
     private static final Map<String, Class<? extends WebSocket>> registered = new ConcurrentHashMap<>();
     private static final AtomicLong connectionId = new AtomicLong(0);
 
-    // Just demo as for now
     public static boolean checkWsProtocol(Properties header, String method, Socket socket, Properties parms, String uri) {
         if (!"GET".equals(method)) {
             return false;

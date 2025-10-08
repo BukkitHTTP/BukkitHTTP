@@ -1,4 +1,4 @@
-package nano.http.d2.ai;
+package nano.http.d2.ai.data;
 
 import nano.http.d2.database.internal.SerlClz;
 
@@ -30,6 +30,11 @@ public class Message {
 
     @Override
     public String toString() {
-        return "Message{" + "role='" + role + '\'' + ", content='" + content + '\'' + (id.isEmpty() ? "" : ", tcid='" + id + '\'') + '}';
+        return "Message{" +
+                "role='" + role + '\'' +
+                ", content='" + content + '\'' +
+                (tool.isEmpty() ? "" : ", tool='" + tool + '\'') +
+                (id.isEmpty() ? "" : ", tcid='" + id + '\'') +
+                '}';
     }
 }
