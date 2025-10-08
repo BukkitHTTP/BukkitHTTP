@@ -38,6 +38,4 @@ public class SerlBridge {
         iis.close();
         return new SerlBridgeResult(obj, ctx.isDirty);
     }
-
-
 }

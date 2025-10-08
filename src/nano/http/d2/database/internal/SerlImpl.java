@@ -3,10 +3,7 @@ package nano.http.d2.database.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,9 +23,8 @@ public class SerlImpl {
         throw new IOException("Invalid boolean value: " + val);
     }
 
-    private static boolean writeByte(byte value, OutputStream os) throws IOException {
+    private static void writeByte(byte value, OutputStream os) throws IOException {
         os.write(value);
-        return true;
     }
 
     private static byte readByte(InputStream is) throws IOException {
@@ -369,7 +365,12 @@ public class SerlImpl {
                         ctx.isDirty = true;
                     }
                 }
-                ctx.classList.add(new DeSerlCtx.ClassWithId(cls, constructor, fields));
+                Method m = null;
+                try {
+                    m = cls.getDeclaredMethod("__");
+                } catch (NoSuchMethodException ignored) {
+                }
+                ctx.classList.add(new DeSerlCtx.ClassWithId(cls, constructor, fields, m));
                 return readObject(is, ctx); // Read the actual object now that class is registered
             } catch (ClassNotFoundException e) {
 
@@ -378,10 +379,11 @@ public class SerlImpl {
                 throw new IOException("No default constructor for class: " + className, e);
             }
         }
+
         DeSerlCtx.ClassWithId classWithId = ctx.classList.get(typeId - 1);
         Object obj;
         try {
-            obj = classWithId.cls.getDeclaredConstructor().newInstance();
+            obj = classWithId.constructor.newInstance();
         } catch (Exception e) {
             throw new IOException("Failed to instantiate class: " + classWithId.cls.getName(), e);
         }
@@ -395,6 +397,13 @@ public class SerlImpl {
                 }
             } else {
                 readObject(is, ctx);
+            }
+        }
+        if (classWithId.__ != null) {
+            try {
+                classWithId.__.invoke(obj);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new IOException("Class refused to get deserialized: " + classWithId.cls.getName(), e);
             }
         }
         return obj;

@@ -2,6 +2,7 @@ package nano.http.d2.database.internal;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,11 +23,13 @@ public class DeSerlCtx {
         final Class<?> cls;
         final Constructor<?> constructor;
         final Field[] fields;
+        final Method __;
 
-        ClassWithId(Class<?> cls, Constructor<?> constructor, Field[] fields) {
+        ClassWithId(Class<?> cls, Constructor<?> constructor, Field[] fields, Method __) {
             this.cls = cls;
             this.constructor = constructor;
             this.fields = fields;
+            this.__ = __;
         }
     }
 }

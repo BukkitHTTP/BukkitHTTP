@@ -5,22 +5,21 @@
 
 package nano.http.d2.json;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"unused", "UnusedReturnValue", "UnnecessaryUnicodeEscape", "BooleanMethodIsAlwaysInverted"})
+@SuppressWarnings({"UnusedReturnValue", "UnnecessaryUnicodeEscape", "BooleanMethodIsAlwaysInverted"})
 public class NanoJSON {
     public static final Object NULL = new Null();
     static final Pattern NUMBER_PATTERN = Pattern.compile("-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?");
@@ -93,23 +92,6 @@ public class NanoJSON {
         }
     }
 
-    public NanoJSON(Map<?, ?> m) {
-        if (m == null) {
-            this.map = new HashMap<>();
-        } else {
-            this.map = new HashMap<>(m.size());
-            for (final Entry<?, ?> e : m.entrySet()) {
-                if (e.getKey() == null) {
-                    throw new NullPointerException("Null key.");
-                }
-                final Object value = e.getValue();
-                if (value != null) {
-                    this.map.put(String.valueOf(e.getKey()), wrap(value));
-                }
-            }
-        }
-    }
-
     // Attention: This constructor is not the same in the org.json
     // This constructor is used to convert a Nano-Styled DTO to a NanoJSON
     public NanoJSON(Object dto) {
@@ -117,48 +99,8 @@ public class NanoJSON {
         this.populateMap(dto);
     }
 
-    private NanoJSON(Object bean, Set<Object> objectsRecord) {
-        this();
-        this.populateMap(bean, objectsRecord);
-    }
-
-    public NanoJSON(Object object, String... names) {
-        this(names.length);
-        Class<?> c = object.getClass();
-        for (String name : names) {
-            try {
-                this.putOpt(name, c.getField(name).get(object));
-            } catch (Exception ignore) {
-            }
-        }
-    }
-
     public NanoJSON(String source) throws JSONException {
         this(new JSONTokener(source));
-    }
-
-    public NanoJSON(String baseName, Locale locale) throws JSONException {
-        this();
-        ResourceBundle bundle = ResourceBundle.getBundle(baseName, locale, Thread.currentThread().getContextClassLoader());
-        Enumeration<String> keys = bundle.getKeys();
-        while (keys.hasMoreElements()) {
-            String key = keys.nextElement();
-            if (key != null) {
-                String[] path = key.split("\\.");
-                int last = path.length - 1;
-                NanoJSON target = this;
-                for (int i = 0; i < last; i += 1) {
-                    String segment = path[i];
-                    NanoJSON nextTarget = target.optJSONObject(segment);
-                    if (nextTarget == null) {
-                        nextTarget = new NanoJSON();
-                        target.put(segment, nextTarget);
-                    }
-                    target = nextTarget;
-                }
-                target.put(path[last], bundle.getString(key));
-            }
-        }
     }
 
     protected NanoJSON(int initialCapacity) {
@@ -174,46 +116,6 @@ public class NanoJSON {
     @Deprecated
     public static String asJSON(Object o) {
         return new NanoJSON(o).toString();
-    }
-
-    public static String doubleToString(double d) {
-        if (Double.isInfinite(d) || Double.isNaN(d)) {
-            return "null";
-        }
-        String string = Double.toString(d);
-        if (string.indexOf('.') > 0 && string.indexOf('e') < 0 && string.indexOf('E') < 0) {
-            while (string.endsWith("0")) {
-                string = string.substring(0, string.length() - 1);
-            }
-            if (string.endsWith(".")) {
-                string = string.substring(0, string.length() - 1);
-            }
-        }
-        return string;
-    }
-
-    public static String[] getNames(NanoJSON jo) {
-        if (jo.isEmpty()) {
-            return null;
-        }
-        return jo.keySet().toArray(new String[jo.length()]);
-    }
-
-    public static String[] getNames(Object object) {
-        if (object == null) {
-            return null;
-        }
-        Class<?> klass = object.getClass();
-        Field[] fields = klass.getFields();
-        int length = fields.length;
-        if (length == 0) {
-            return null;
-        }
-        String[] names = new String[length];
-        for (int i = 0; i < length; i += 1) {
-            names[i] = fields[i].getName();
-        }
-        return names;
     }
 
     public static String numberToString(Number number) throws JSONException {
@@ -301,102 +203,10 @@ public class NanoJSON {
         if (f.getName().equals("serialVersionUID")) {
             return true;
         }
-
         //Check if the field is static
-        return (f.getModifiers() & 0x00000008) != 0;
-    }
-
-    private static boolean isValidMethodName(String name) {
-        return !"getClass".equals(name) && !"getDeclaringClass".equals(name);
-    }
-
-    private static String getKeyNameFromMethod(Method method) {
-        final int ignoreDepth = getAnnotationDepth(method, JSONPropertyIgnore.class);
-        if (ignoreDepth > 0) {
-            final int forcedNameDepth = getAnnotationDepth(method, JSONPropertyName.class);
-            if (forcedNameDepth < 0 || ignoreDepth <= forcedNameDepth) {
-                return null;
-            }
-        }
-        JSONPropertyName annotation = getAnnotation(method, JSONPropertyName.class);
-        if (annotation != null && annotation.value() != null && !annotation.value().isEmpty()) {
-            return annotation.value();
-        }
-        String key;
-        final String name = method.getName();
-        if (name.startsWith("get") && name.length() > 3) {
-            key = name.substring(3);
-        } else if (name.startsWith("is") && name.length() > 2) {
-            key = name.substring(2);
-        } else {
-            return null;
-        }
-        if (Character.isLowerCase(key.charAt(0))) {
-            return null;
-        }
-        if (key.length() == 1) {
-            key = key.toLowerCase(Locale.ROOT);
-        } else if (!Character.isUpperCase(key.charAt(1))) {
-            key = key.substring(0, 1).toLowerCase(Locale.ROOT) + key.substring(1);
-        }
-        return key;
-    }
-
-    private static <A extends Annotation> A getAnnotation(final Method m, final Class<A> annotationClass) {
-        if (m == null || annotationClass == null) {
-            return null;
-        }
-        if (m.isAnnotationPresent(annotationClass)) {
-            return m.getAnnotation(annotationClass);
-        }
-        Class<?> c = m.getDeclaringClass();
-        if (c.getSuperclass() == null) {
-            return null;
-        }
-        for (Class<?> i : c.getInterfaces()) {
-            try {
-                Method im = i.getMethod(m.getName(), m.getParameterTypes());
-                return getAnnotation(im, annotationClass);
-            } catch (final SecurityException | NoSuchMethodException ignored) {
-            }
-        }
-        try {
-            return getAnnotation(c.getSuperclass().getMethod(m.getName(), m.getParameterTypes()), annotationClass);
-        } catch (final SecurityException | NoSuchMethodException ex) {
-            return null;
-        }
-    }
-
-    private static int getAnnotationDepth(final Method m, final Class<? extends Annotation> annotationClass) {
-        if (m == null || annotationClass == null) {
-            return -1;
-        }
-        if (m.isAnnotationPresent(annotationClass)) {
-            return 1;
-        }
-        Class<?> c = m.getDeclaringClass();
-        if (c.getSuperclass() == null) {
-            return -1;
-        }
-        for (Class<?> i : c.getInterfaces()) {
-            try {
-                Method im = i.getMethod(m.getName(), m.getParameterTypes());
-                int d = getAnnotationDepth(im, annotationClass);
-                if (d > 0) {
-                    return d + 1;
-                }
-            } catch (final SecurityException | NoSuchMethodException ignored) {
-            }
-        }
-        try {
-            int d = getAnnotationDepth(c.getSuperclass().getMethod(m.getName(), m.getParameterTypes()), annotationClass);
-            if (d > 0) {
-                return d + 1;
-            }
-            return -1;
-        } catch (final SecurityException | NoSuchMethodException ex) {
-            return -1;
-        }
+        return (Modifier.isStatic(f.getModifiers())
+                //Check if the field is transient
+                || Modifier.isTransient(f.getModifiers()));
     }
 
     public static String quote(String string) {
@@ -464,22 +274,6 @@ public class NanoJSON {
         }
         w.write('"');
         return w;
-    }
-
-    static boolean isNumberSimilar(Number l, Number r) {
-        if (!numberIsFinite(l) || !numberIsFinite(r)) {
-            return false;
-        }
-        if (l.getClass().equals(r.getClass()) && l instanceof Comparable) {
-            @SuppressWarnings({"rawtypes", "unchecked"}) int compareTo = ((Comparable) l).compareTo(r);
-            return compareTo == 0;
-        }
-        final BigDecimal lBigDecimal = objectToBigDecimal(l, null, false);
-        final BigDecimal rBigDecimal = objectToBigDecimal(r, null, false);
-        if (lBigDecimal == null || rBigDecimal == null) {
-            return false;
-        }
-        return lBigDecimal.compareTo(rBigDecimal) == 0;
     }
 
     private static boolean numberIsFinite(Number n) {
@@ -571,56 +365,9 @@ public class NanoJSON {
         return JSONWriter.valueToString(value);
     }
 
-    public static Object wrap(Object object) {
-        return wrap(object, null);
-    }
-
-    private static Object wrap(Object object, Set<Object> objectsRecord) {
-        try {
-            if (NULL.equals(object)) {
-                return NULL;
-            }
-            if (object instanceof NanoJSON || object instanceof JSONArray || object instanceof JSONString || object instanceof Byte || object instanceof Character || object instanceof Short || object instanceof Integer || object instanceof Long || object instanceof Boolean || object instanceof Float || object instanceof Double || object instanceof String || object instanceof BigInteger || object instanceof BigDecimal || object instanceof Enum) {
-                return object;
-            }
-            if (object instanceof Collection) {
-                Collection<?> coll = (Collection<?>) object;
-                return new JSONArray(coll);
-            }
-            if (object.getClass().isArray()) {
-                return new JSONArray(object);
-            }
-            if (object instanceof Map) {
-                Map<?, ?> map = (Map<?, ?>) object;
-                return new NanoJSON(map);
-            }
-            Package objectPackage = object.getClass().getPackage();
-            String objectPackageName = objectPackage != null ? objectPackage.getName() : "";
-            if (objectPackageName.startsWith("java.") || objectPackageName.startsWith("javax.") || object.getClass().getClassLoader() == null) {
-                return object.toString();
-            }
-            if (objectsRecord != null) {
-                return new NanoJSON(object, objectsRecord);
-            }
-            return new NanoJSON(object);
-        } catch (JSONException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            return null;
-        }
-    }
-
     static Writer writeValue(Writer writer, Object value, int indentFactor, int indent) throws JSONException, IOException {
         if (value == null) {
             writer.write("null");
-        } else if (value instanceof JSONString) {
-            Object o;
-            try {
-                o = ((JSONString) value).toJSONString();
-            } catch (Exception e) {
-                throw new JSONException(e);
-            }
-            writer.write(o != null ? o.toString() : quote(value.toString()));
         } else if (value instanceof Number) {
             final String numberAsString = numberToString((Number) value);
             if (NUMBER_PATTERN.matcher(numberAsString).matches()) {
@@ -636,14 +383,6 @@ public class NanoJSON {
             ((NanoJSON) value).write(writer, indentFactor, indent);
         } else if (value instanceof JSONArray) {
             ((JSONArray) value).write(writer, indentFactor, indent);
-        } else if (value instanceof Map) {
-            Map<?, ?> map = (Map<?, ?>) value;
-            new NanoJSON(map).write(writer, indentFactor, indent);
-        } else if (value instanceof Collection) {
-            Collection<?> coll = (Collection<?>) value;
-            new JSONArray(coll).write(writer, indentFactor, indent);
-        } else if (value.getClass().isArray()) {
-            new JSONArray(value).write(writer, indentFactor, indent);
         } else {
             quote(value.toString(), writer);
         }
@@ -664,28 +403,6 @@ public class NanoJSON {
             return new JSONException("JSONObject[" + quote(key) + "] is not a " + valueType + " (" + value.getClass() + ").", cause);
         }
         return new JSONException("JSONObject[" + quote(key) + "] is not a " + valueType + " (" + value.getClass() + " : " + value + ").", cause);
-    }
-
-    private static JSONException recursivelyDefinedObjectException(String key) {
-        return new JSONException("JavaBean object contains recursively defined member variable of key " + quote(key));
-    }
-
-    @SuppressWarnings("rawtypes")
-    public Class<? extends Map> getMapType() {
-        return map.getClass();
-    }
-
-    public NanoJSON accumulate(String key, Object value) throws JSONException {
-        testValidity(value);
-        Object object = this.opt(key);
-        if (object == null) {
-            this.put(key, value instanceof JSONArray ? new JSONArray().put(value) : value);
-        } else if (object instanceof JSONArray) {
-            ((JSONArray) object).put(value);
-        } else {
-            this.put(key, new JSONArray().put(object).put(value));
-        }
-        return this;
     }
 
     public NanoJSON append(String key, Object value) throws JSONException {
@@ -710,14 +427,6 @@ public class NanoJSON {
             throw new JSONException("JSONObject[" + quote(key) + "] not found.");
         }
         return object;
-    }
-
-    public <E extends Enum<E>> E getEnum(Class<E> clazz, String key) throws JSONException {
-        E val = optEnum(clazz, key);
-        if (val == null) {
-            throw wrongValueFormatException(key, "enum of type " + quote(clazz.getSimpleName()), opt(key), null);
-        }
-        return val;
     }
 
     public boolean getBoolean(String key) throws JSONException {
@@ -836,6 +545,10 @@ public class NanoJSON {
         return this.map.containsKey(key);
     }
 
+    public boolean hasNonNull(String key) {
+        return this.map.containsKey(key) && !this.isNull(key);
+    }
+
     public NanoJSON increment(String key) throws JSONException {
         Object value = this.opt(key);
         if (value == null) {
@@ -886,35 +599,8 @@ public class NanoJSON {
         return this.map.isEmpty();
     }
 
-    public JSONArray names() {
-        if (this.map.isEmpty()) {
-            return null;
-        }
-        return new JSONArray(this.map.keySet());
-    }
-
     public Object opt(String key) {
         return key == null ? null : this.map.get(key);
-    }
-
-    public <E extends Enum<E>> E optEnum(Class<E> clazz, String key) {
-        return this.optEnum(clazz, key, null);
-    }
-
-    public <E extends Enum<E>> E optEnum(Class<E> clazz, String key, E defaultValue) {
-        try {
-            Object val = this.opt(key);
-            if (NULL.equals(val)) {
-                return defaultValue;
-            }
-            if (clazz.isAssignableFrom(val.getClass())) {
-                @SuppressWarnings("unchecked") E myE = (E) val;
-                return myE;
-            }
-            return Enum.valueOf(clazz, val.toString());
-        } catch (IllegalArgumentException | NullPointerException e) {
-            return defaultValue;
-        }
     }
 
     public boolean optBoolean(String key) {
@@ -1053,47 +739,8 @@ public class NanoJSON {
         }
     }
 
-    private void populateMap(Object bean, Set<Object> objectsRecord) {
-        if (objectsRecord == null) {
-            objectsRecord = Collections.newSetFromMap(new IdentityHashMap<>());
-        }
-        Class<?> klass = bean.getClass();
-        boolean includeSuperClass = klass.getClassLoader() != null;
-        Method[] methods = includeSuperClass ? klass.getMethods() : klass.getDeclaredMethods();
-        for (final Method method : methods) {
-            final int modifiers = method.getModifiers();
-            if (Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) && method.getParameterTypes().length == 0 && !method.isBridge() && method.getReturnType() != Void.TYPE && isValidMethodName(method.getName())) {
-                final String key = getKeyNameFromMethod(method);
-                if (key != null && !key.isEmpty()) {
-                    try {
-                        final Object result = method.invoke(bean);
-                        if (result != null) {
-                            if (objectsRecord.contains(result)) {
-                                throw recursivelyDefinedObjectException(key);
-                            }
-                            objectsRecord.add(result);
-                            this.map.put(key, wrap(result, objectsRecord));
-                            objectsRecord.remove(result);
-                            if (result instanceof Closeable) {
-                                try {
-                                    ((Closeable) result).close();
-                                } catch (IOException ignore) {
-                                }
-                            }
-                        }
-                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ignore) {
-                    }
-                }
-            }
-        }
-    }
-
     public NanoJSON put(String key, boolean value) throws JSONException {
         return this.put(key, value ? Boolean.TRUE : Boolean.FALSE);
-    }
-
-    public NanoJSON put(String key, Collection<?> value) throws JSONException {
-        return this.put(key, new JSONArray(value));
     }
 
     public NanoJSON put(String key, double value) throws JSONException {
@@ -1146,83 +793,8 @@ public class NanoJSON {
         return this;
     }
 
-    public Object query(String jsonPointer) {
-        return query(new JSONPointer(jsonPointer));
-    }
-
-    public Object query(JSONPointer jsonPointer) {
-        return jsonPointer.queryFrom(this);
-    }
-
-    public Object optQuery(String jsonPointer) {
-        return optQuery(new JSONPointer(jsonPointer));
-    }
-
-    public Object optQuery(JSONPointer jsonPointer) {
-        try {
-            return jsonPointer.queryFrom(this);
-        } catch (JSONPointerException e) {
-            return null;
-        }
-    }
-
     public Object remove(String key) {
         return this.map.remove(key);
-    }
-
-    public boolean similar(Object other) {
-        try {
-            if (!(other instanceof NanoJSON)) {
-                return false;
-            }
-            if (!this.keySet().equals(((NanoJSON) other).keySet())) {
-                return false;
-            }
-            for (final Entry<String, ?> entry : this.entrySet()) {
-                String name = entry.getKey();
-                Object valueThis = entry.getValue();
-                Object valueOther = ((NanoJSON) other).get(name);
-                if (valueThis == valueOther) {
-                    continue;
-                }
-                if (valueThis == null) {
-                    return false;
-                }
-                if (valueThis instanceof NanoJSON) {
-                    if (!((NanoJSON) valueThis).similar(valueOther)) {
-                        return false;
-                    }
-                } else if (valueThis instanceof JSONArray) {
-                    if (!((JSONArray) valueThis).similar(valueOther)) {
-                        return false;
-                    }
-                } else if (valueThis instanceof Number && valueOther instanceof Number) {
-                    if (!isNumberSimilar((Number) valueThis, (Number) valueOther)) {
-                        return false;
-                    }
-                } else if (valueThis instanceof JSONString && valueOther instanceof JSONString) {
-                    if (!((JSONString) valueThis).toJSONString().equals(((JSONString) valueOther).toJSONString())) {
-                        return false;
-                    }
-                } else if (!valueThis.equals(valueOther)) {
-                    return false;
-                }
-            }
-            return true;
-        } catch (Throwable exception) {
-            return false;
-        }
-    }
-
-    public JSONArray toJSONArray(JSONArray names) throws JSONException {
-        if (names == null || names.isEmpty()) {
-            return null;
-        }
-        JSONArray ja = new JSONArray();
-        for (int i = 0; i < names.length(); i += 1) {
-            ja.put(this.opt(names.getString(i)));
-        }
-        return ja;
     }
 
     @Override
@@ -1239,10 +811,6 @@ public class NanoJSON {
         synchronized (w.getBuffer()) {
             return this.write(w, indentFactor, 0).toString();
         }
-    }
-
-    public Writer write(Writer writer) throws JSONException {
-        return this.write(writer, 0, 0);
     }
 
     public Writer write(Writer writer, int indentFactor, int indent) throws JSONException {
@@ -1296,24 +864,6 @@ public class NanoJSON {
         } catch (IOException exception) {
             throw new JSONException(exception);
         }
-    }
-
-    public Map<String, Object> toMap() {
-        Map<String, Object> results = new HashMap<>();
-        for (Entry<String, Object> entry : this.entrySet()) {
-            Object value;
-            if (entry.getValue() == null || NULL.equals(entry.getValue())) {
-                value = null;
-            } else if (entry.getValue() instanceof NanoJSON) {
-                value = ((NanoJSON) entry.getValue()).toMap();
-            } else if (entry.getValue() instanceof JSONArray) {
-                value = ((JSONArray) entry.getValue()).toList();
-            } else {
-                value = entry.getValue();
-            }
-            results.put(entry.getKey(), value);
-        }
-        return results;
     }
 
     @SuppressWarnings("ALL")

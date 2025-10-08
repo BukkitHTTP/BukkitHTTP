@@ -33,9 +33,6 @@ public class SimpleObject {
 
     @Override
     public String toString() {
-        return "SimpleObject{" +
-                "intValue=" + intValue +
-                ", stringValue='" + stringValue + '\'' +
-                '}';
+        return "SimpleObject{" + "intValue=" + intValue + ", stringValue='" + stringValue + '\'' + '}';
     }
 }

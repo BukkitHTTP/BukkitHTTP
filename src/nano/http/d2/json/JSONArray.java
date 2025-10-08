@@ -3,10 +3,11 @@ package nano.http.d2.json;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
 
 @SuppressWarnings("unused")
 public class JSONArray implements Iterable<Object> {
@@ -60,37 +61,12 @@ public class JSONArray implements Iterable<Object> {
         this(new JSONTokener(source));
     }
 
-    public JSONArray(Collection<?> collection) {
-        if (collection == null) {
-            this.myArrayList = new ArrayList<>();
-        } else {
-            this.myArrayList = new ArrayList<>(collection.size());
-            this.addAll(collection, true);
-        }
-    }
-
-    public JSONArray(Iterable<?> iter) {
-        this();
-        if (iter == null) {
-            return;
-        }
-        this.addAll(iter, true);
-    }
-
     public JSONArray(JSONArray array) {
         if (array == null) {
             this.myArrayList = new ArrayList<>();
         } else {
             this.myArrayList = new ArrayList<>(array.myArrayList);
         }
-    }
-
-    public JSONArray(Object array) throws JSONException {
-        this();
-        if (!array.getClass().isArray()) {
-            throw new JSONException("JSONArray initial value should be a string or collection or array.");
-        }
-        this.addAll(array, true);
     }
 
     public JSONArray(int initialCapacity) throws JSONException {
@@ -406,10 +382,6 @@ public class JSONArray implements Iterable<Object> {
         return this.put(value ? Boolean.TRUE : Boolean.FALSE);
     }
 
-    public JSONArray put(Collection<?> value) {
-        return this.put(new JSONArray(value));
-    }
-
     public JSONArray put(double value) throws JSONException {
         return this.put(Double.valueOf(value));
     }
@@ -438,10 +410,6 @@ public class JSONArray implements Iterable<Object> {
 
     public JSONArray put(int index, boolean value) throws JSONException {
         return this.put(index, value ? Boolean.TRUE : Boolean.FALSE);
-    }
-
-    public JSONArray put(int index, Collection<?> value) throws JSONException {
-        return this.put(index, new JSONArray(value));
     }
 
     public JSONArray put(int index, double value) throws JSONException {
@@ -484,100 +452,13 @@ public class JSONArray implements Iterable<Object> {
         return this.put(value);
     }
 
-    public JSONArray putAll(Collection<?> collection) {
-        this.addAll(collection, false);
-        return this;
-    }
-
-    public JSONArray putAll(Iterable<?> iter) {
-        this.addAll(iter, false);
-        return this;
-    }
-
     public JSONArray putAll(JSONArray array) {
         this.myArrayList.addAll(array.myArrayList);
         return this;
     }
 
-    public JSONArray putAll(Object array) throws JSONException {
-        this.addAll(array, false);
-        return this;
-    }
-
-    public Object query(String jsonPointer) {
-        return query(new JSONPointer(jsonPointer));
-    }
-
-    public Object query(JSONPointer jsonPointer) {
-        return jsonPointer.queryFrom(this);
-    }
-
-    public Object optQuery(String jsonPointer) {
-        return optQuery(new JSONPointer(jsonPointer));
-    }
-
-    public Object optQuery(JSONPointer jsonPointer) {
-        try {
-            return jsonPointer.queryFrom(this);
-        } catch (JSONPointerException e) {
-            return null;
-        }
-    }
-
     public Object remove(int index) {
         return index >= 0 && index < this.length() ? this.myArrayList.remove(index) : null;
-    }
-
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean similar(Object other) {
-        if (!(other instanceof JSONArray)) {
-            return false;
-        }
-        int len = this.length();
-        if (len != ((JSONArray) other).length()) {
-            return false;
-        }
-        for (int i = 0; i < len; i += 1) {
-            Object valueThis = this.myArrayList.get(i);
-            Object valueOther = ((JSONArray) other).myArrayList.get(i);
-            if (valueThis == valueOther) {
-                continue;
-            }
-            if (valueThis == null) {
-                return false;
-            }
-            if (valueThis instanceof NanoJSON) {
-                if (!((NanoJSON) valueThis).similar(valueOther)) {
-                    return false;
-                }
-            } else if (valueThis instanceof JSONArray) {
-                if (!((JSONArray) valueThis).similar(valueOther)) {
-                    return false;
-                }
-            } else if (valueThis instanceof Number && valueOther instanceof Number) {
-                if (!NanoJSON.isNumberSimilar((Number) valueThis, (Number) valueOther)) {
-                    return false;
-                }
-            } else if (valueThis instanceof JSONString && valueOther instanceof JSONString) {
-                if (!((JSONString) valueThis).toJSONString().equals(((JSONString) valueOther).toJSONString())) {
-                    return false;
-                }
-            } else if (!valueThis.equals(valueOther)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public NanoJSON toJSONObject(JSONArray names) throws JSONException {
-        if (names == null || names.isEmpty() || this.isEmpty()) {
-            return null;
-        }
-        NanoJSON jo = new NanoJSON(names.length());
-        for (int i = 0; i < names.length(); i += 1) {
-            jo.put(names.getString(i), this.opt(i));
-        }
-        return jo;
     }
 
     @Override
@@ -594,10 +475,6 @@ public class JSONArray implements Iterable<Object> {
         synchronized (sw.getBuffer()) {
             return this.write(sw, indentFactor, 0).toString();
         }
-    }
-
-    public Writer write(Writer writer) throws JSONException {
-        return this.write(writer, 0, 0);
     }
 
     public Writer write(Writer writer, int indentFactor, int indent) throws JSONException {
@@ -640,72 +517,7 @@ public class JSONArray implements Iterable<Object> {
         }
     }
 
-    public List<Object> toList() {
-        List<Object> results = new ArrayList<>(this.myArrayList.size());
-        for (Object element : this.myArrayList) {
-            if (element == null || NanoJSON.NULL.equals(element)) {
-                results.add(null);
-            } else if (element instanceof JSONArray) {
-                results.add(((JSONArray) element).toList());
-            } else if (element instanceof NanoJSON) {
-                results.add(((NanoJSON) element).toMap());
-            } else {
-                results.add(element);
-            }
-        }
-        return results;
-    }
-
     public boolean isEmpty() {
         return this.myArrayList.isEmpty();
-    }
-
-    private void addAll(Collection<?> collection, boolean wrap) {
-        this.myArrayList.ensureCapacity(this.myArrayList.size() + collection.size());
-        if (wrap) {
-            for (Object o : collection) {
-                this.put(NanoJSON.wrap(o));
-            }
-        } else {
-            for (Object o : collection) {
-                this.put(o);
-            }
-        }
-    }
-
-    private void addAll(Iterable<?> iter, boolean wrap) {
-        if (wrap) {
-            for (Object o : iter) {
-                this.put(NanoJSON.wrap(o));
-            }
-        } else {
-            for (Object o : iter) {
-                this.put(o);
-            }
-        }
-    }
-
-    private void addAll(Object array, boolean wrap) throws JSONException {
-        if (array.getClass().isArray()) {
-            int length = Array.getLength(array);
-            this.myArrayList.ensureCapacity(this.myArrayList.size() + length);
-            if (wrap) {
-                for (int i = 0; i < length; i += 1) {
-                    this.put(NanoJSON.wrap(Array.get(array, i)));
-                }
-            } else {
-                for (int i = 0; i < length; i += 1) {
-                    this.put(Array.get(array, i));
-                }
-            }
-        } else if (array instanceof JSONArray) {
-            this.myArrayList.addAll(((JSONArray) array).myArrayList);
-        } else if (array instanceof Collection) {
-            this.addAll((Collection<?>) array, wrap);
-        } else if (array instanceof Iterable) {
-            this.addAll((Iterable<?>) array, wrap);
-        } else {
-            throw new JSONException("JSONArray initial value should be a string or collection or array.");
-        }
     }
 }

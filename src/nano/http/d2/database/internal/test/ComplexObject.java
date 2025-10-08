@@ -31,6 +31,10 @@ public class ComplexObject {
     public ComplexObject() {
     }
 
+    public void __() {
+        System.out.println("ComplexObject post-deserialization hook called.");
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
