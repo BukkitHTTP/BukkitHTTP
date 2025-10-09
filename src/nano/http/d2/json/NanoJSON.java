@@ -100,7 +100,11 @@ public class NanoJSON {
     }
 
     public NanoJSON(String source) throws JSONException {
-        this(new JSONTokener(source));
+        try {
+            this.map = new NanoJSON(new JSONTokener(source)).map;
+        } catch (Exception e) {
+            throw new JSONException(source, e);
+        }
     }
 
     protected NanoJSON(int initialCapacity) {

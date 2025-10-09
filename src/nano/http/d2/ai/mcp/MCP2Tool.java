@@ -1,9 +1,6 @@
 package nano.http.d2.ai.mcp;
 
-import nano.http.d2.ai.OpenRouter;
 import nano.http.d2.ai.Tool;
-import nano.http.d2.ai.data.ChatContext;
-import nano.http.d2.ai.data.Message;
 import nano.http.d2.json.JSONArray;
 import nano.http.d2.json.NanoJSON;
 
@@ -84,7 +81,7 @@ public class MCP2Tool {
                             return "Tool call returned no text :(\nFor security concerns some part of the response may be omitted.\n-BukkitHTTP MCP Client";
                         }
                         return sb.toString();
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         return "Tool call failed :(\n" + e;
                     }
                 });
@@ -113,24 +110,6 @@ public class MCP2Tool {
             };
         } catch (Exception ex) {
             return null;
-        }
-    }
-
-    public static void main(String[] args) {
-        try {
-            MCPToolList tool = fromMcp("https://mcp.api-inference.modelscope.net/xxx/sse", false);
-            OpenRouter.or_key = "sk-or-v1-xxx";
-            ChatContext ctx = new ChatContext();
-            ctx.tools = tool.tools;
-            ctx.noThinking = false;
-            ctx.messages.add(new Message("user", "周纯杰是谁？"));
-            OpenRouter.complete(ctx, () -> {
-                System.out.println(ctx);
-                System.out.println("-------------------------------------------------------------------------------------------------------------------");
-            });
-            System.out.println(ctx);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }

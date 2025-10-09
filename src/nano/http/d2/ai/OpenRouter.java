@@ -49,9 +49,14 @@ public class OpenRouter {
             JSONArray messages = new JSONArray();
 
             for (Message msg : ctx.messages) {
-                messages.put(new NanoJSON().put("role", msg.role).put("content", msg.content));
+                messages.put(new NanoJSON()
+                        .put("role", msg.role)
+                        .put("content", msg.content));
             }
-            NanoJSON body = new NanoJSON().put("model", ctx.model).put("messages", messages).put("stream", true);
+            NanoJSON body = new NanoJSON()
+                    .put("model", ctx.model)
+                    .put("messages", messages)
+                    .put("stream", true);
             NanoJSON reasoning = new NanoJSON().put("enabled", !ctx.noThinking);
             body.put("reasoning", reasoning);
             con.getOutputStream().write(body.toString().getBytes(StandardCharsets.UTF_8));
@@ -154,8 +159,13 @@ public class OpenRouter {
                     }
                     messages.put(m);
                 }
-                NanoJSON body = new NanoJSON().put("model", ctx.model).put("messages", messages).put("stream", false);
-                NanoJSON reasoning = new NanoJSON().put("enabled", !ctx.noThinking);
+                NanoJSON body = new NanoJSON()
+                        .put("model", ctx.model)
+                        .put("messages", messages)
+                        .put("stream", false);
+                NanoJSON reasoning = new NanoJSON()
+                        .put("enabled", !ctx.noThinking)
+                        .put("effort", "low");
                 body.put("reasoning", reasoning);
                 if (!ctx.tools.isEmpty()) {
                     JSONArray tools = new JSONArray();
@@ -163,7 +173,19 @@ public class OpenRouter {
                         tools.put(t.desc);
                     }
                     body.put("tools", tools);
+
+                    NanoJSON providers = new NanoJSON();
+                    JSONArray quantizations = new JSONArray();
+                    // X int4 int8 -> too bad to be useful
+                    quantizations.put("fp8");
+                    quantizations.put("bf16");
+                    quantizations.put("fp16");
+                    quantizations.put("fp32");
+                    providers.put("quantizations", quantizations);
+                    body.put("providers", providers);
                 }
+
+
                 con.getOutputStream().write(body.toString().getBytes(StandardCharsets.UTF_8));
                 InputStream is;
                 try {
@@ -230,24 +252,29 @@ public class OpenRouter {
 
                 String c = response.getString("content");
                 String r = response.optString("reasoning", "");
-                if (!ctx.tools.isEmpty() && !ctx.noThinking && c.isEmpty() && !r.isEmpty() && needTrim) {
-                    if (needSkip) {
-                        needSkip = false;
-                        Message msg = new Message("assistant", r);
-                        msg.trans = true;
-                        ctx.messages.add(msg);
-                        if (toolPartialCallback != null) {
-                            toolPartialCallback.run();
+                if (!ctx.tools.isEmpty() && !ctx.noThinking && c.isEmpty() && !r.isEmpty()) {
+                    if (needTrim) {
+                        if (needSkip) {
+                            needSkip = false;
+                            Message msg = new Message("assistant", r);
+                            msg.trans = true;
+                            ctx.messages.add(msg);
+                            if (toolPartialCallback != null) {
+                                toolPartialCallback.run();
+                            }
+                            continue;
                         }
-                        continue;
+                        c = r;
+                    } else {
+                        ctx.messages.add(new Message("assistant", "Error: Model returned reasoning without content, try enabling NoThinking! Reasoning: " + r));
+                        break;
                     }
-                    c = r;
                 }
+
                 ctx.messages.add(new Message("assistant", c));
                 break;
             }
         } catch (Exception ex) {
-            System.err.println("OpenRouter.complete error: " + ex);
             ctx.messages.add(new Message("assistant", "Error: " + ex));
         } finally {
             if (needTrim) {

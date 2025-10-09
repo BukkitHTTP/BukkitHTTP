@@ -1,5 +1,6 @@
 package nano.http.d2.ai.data;
 
+import nano.http.d2.ai.OpenRouter;
 import nano.http.d2.ai.Tool;
 import nano.http.d2.database.internal.SerlBridge;
 import nano.http.d2.database.internal.SerlClz;
@@ -14,7 +15,7 @@ public class ChatContext {
     public transient volatile boolean cancelled = false;
     public transient List<Tool> tools = new ArrayList<>();
 
-    public String model = "deepseek/deepseek-chat-v3.1:floor";
+    public String model = "openai/gpt-oss-120b:floor";
     public boolean noThinking = true;
     public List<Message> messages = new ArrayList<>();
 
@@ -47,6 +48,10 @@ public class ChatContext {
             }
         }
         messages = newMessages;
+    }
+
+    public void complete() {
+        OpenRouter.complete(this, null);
     }
 
     @Override
