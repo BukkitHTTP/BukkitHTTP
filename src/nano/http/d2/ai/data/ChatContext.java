@@ -15,7 +15,7 @@ public class ChatContext {
     public transient volatile boolean cancelled = false;
     public transient List<Tool> tools = new ArrayList<>();
 
-    public String model = "openai/gpt-oss-120b:floor";
+    public String model = "z-ai/glm-4.6:floor";
     public boolean noThinking = true;
     public List<Message> messages = new ArrayList<>();
 

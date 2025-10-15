@@ -151,12 +151,17 @@ public class OpenRouter {
                         m.put("content", msg.content);
                     }
 
-                    if (!msg.id.isEmpty()) {
-                        m.put("tool_call_id", msg.id);
+                    if (msg.tool_calling_id != null) {
+                        m.put("tool_call_id", msg.tool_calling_id);
                     }
-                    if (!msg.tool.isEmpty()) {
-                        m.put("tool_calls", new JSONArray(msg.tool));
+                    if (msg.tool_called != null) {
+                        m.put("tool_calls", msg.tool_called);
                     }
+                    if (msg.reasoning != null) {
+                        m.put("reasoning", msg.reasoning);
+                    }
+
+
                     messages.put(m);
                 }
                 NanoJSON body = new NanoJSON()
@@ -202,13 +207,13 @@ public class OpenRouter {
                     if (response.hasNonNull("tool_calls")) {
                         JSONArray calls = response.getJSONArray("tool_calls");
                         if (!calls.isEmpty()) {
-                            String memo = response.optString("content", "");
-                            if (memo.isEmpty()) {
-                                memo = response.optString("reasoning", "");
+                            Message memoHolder = new Message("assistant", response.getString("content"));
+                            if (response.hasNonNull("reasoning")) {
+                                memoHolder.content = response.getString("reasoning");
                             }
-                            Message memoHolder = new Message("assistant", memo);
+                            memoHolder.tool_called = calls;
                             memoHolder.trans = true;
-                            memoHolder.tool = calls.toString();
+
                             ctx.messages.add(memoHolder);
                             needTrim = true;
                             // Skip partial callback here because local tool call is fast enough.
@@ -236,15 +241,14 @@ public class OpenRouter {
 
                                 String strArg = args.getString(foundTool.queryName);
                                 String resp = foundTool.func.apply(strArg);
+                                if (toolPartialCallback != null) {
+                                    toolPartialCallback.run();
+                                }
                                 Message toolMsg = new Message("tool", resp);
                                 toolMsg.trans = true;
-                                toolMsg.id = callId;
+                                toolMsg.tool_calling_id = callId;
                                 ctx.messages.add(toolMsg);
                             }
-                            if (toolPartialCallback != null) {
-                                toolPartialCallback.run();
-                            }
-
                             continue;
                         }
                     }

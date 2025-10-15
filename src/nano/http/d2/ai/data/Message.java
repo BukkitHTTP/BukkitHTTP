@@ -1,6 +1,7 @@
 package nano.http.d2.ai.data;
 
 import nano.http.d2.database.internal.SerlClz;
+import nano.http.d2.json.JSONArray;
 
 import java.io.IOException;
 
@@ -8,8 +9,9 @@ import java.io.IOException;
 public class Message {
     public String role;
     public String content;
-    public String id = "";
-    public String tool = "";
+    public transient String tool_calling_id = null;
+    public transient JSONArray tool_called = null;
+    public transient String reasoning = null;
     public boolean trans = false;
 
     @SuppressWarnings("unused")
@@ -23,7 +25,7 @@ public class Message {
     }
 
     public void validate() throws IOException {
-        if (trans || !tool.isEmpty() || !id.isEmpty()) {
+        if (trans) {
             throw new IOException("TRANS!");
         }
     }
@@ -33,8 +35,10 @@ public class Message {
         return "Message{" +
                 "role='" + role + '\'' +
                 ", content='" + content + '\'' +
-                (tool.isEmpty() ? "" : ", tool='" + tool + '\'') +
-                (id.isEmpty() ? "" : ", tcid='" + id + '\'') +
+                (reasoning == null ? "" : ", reasoning='" + reasoning + '\'') +
+                (tool_calling_id == null ? "" : ", tool_calling_id='" + tool_calling_id + '\'') +
+                (tool_called == null ? "" : ", tool_called=" + tool_called) +
+                (trans ? "TRANS" : "") +
                 '}';
     }
 }
