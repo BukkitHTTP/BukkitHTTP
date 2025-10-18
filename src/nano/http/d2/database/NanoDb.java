@@ -49,8 +49,10 @@ public class NanoDb<T extends Object> {
         FileOutputStream fos = new FileOutputStream(tempFile);
         fos.write(bridge.serialize(impl));
         fos.close();
-        if (file.exists() && !file.delete()) {
-            throw new IOException("Failed to delete old database file: " + file.getAbsolutePath());
+        if (file.exists()) {
+            if (!file.delete()) {
+                throw new IOException("Failed to delete old database file: " + file.getAbsolutePath());
+            }
         }
         if (!tempFile.renameTo(file)) {
             throw new IOException("Failed to rename temp file to database file: " + file.getAbsolutePath());

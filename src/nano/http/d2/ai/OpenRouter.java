@@ -121,6 +121,7 @@ public class OpenRouter {
         boolean needSkip = true;
         int iterLimit = 20;
         try {
+            String lastArg = null;
             while (true) {
                 iterLimit--;
                 if (iterLimit < 0) {
@@ -239,8 +240,13 @@ public class OpenRouter {
                                     throw new Exception("No tool with name: " + funcName);
                                 }
 
+                                String resp = "Tool-Janitor: You can NOT call the same tool with the same argument twice in a row. Refusing to call tool. YOU WILL BE BANNED FROM TOOL USAGE IF YOU KEEP DOING THIS.";
                                 String strArg = args.getString(foundTool.queryName);
-                                String resp = foundTool.func.apply(strArg);
+                                if (!strArg.equals(lastArg)) {
+                                    resp = foundTool.func.apply(strArg);
+                                }
+                                lastArg = strArg;
+
                                 if (toolPartialCallback != null) {
                                     toolPartialCallback.run();
                                 }
