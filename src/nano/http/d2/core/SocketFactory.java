@@ -14,6 +14,7 @@ public class SocketFactory {
             @SuppressWarnings("IOStreamConstructor")
             InputStream keystoreStream = new FileInputStream("test.jks");
             keystore.load(keystoreStream, passphrase);
+            keystoreStream.close();
             KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             keyManagerFactory.init(keystore, passphrase);
 

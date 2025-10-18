@@ -24,8 +24,8 @@ public class NanoDb<T extends Object> {
         this.tempFile = new File(file.getAbsolutePath() + ".tmp");
         this.saveIntervalMs = saveIntervalMs;
         if (file.exists()) {
-            try {
-                SerlBridgeResult result = bridge.deserialize(new FileInputStream(file).readAllBytes(), classLoader);
+            try (FileInputStream fis = new FileInputStream(file)) {
+                SerlBridgeResult result = bridge.deserialize(fis.readAllBytes(), classLoader);
                 impl = (T) result.obj;
                 if (result.isDirty) {
                     Logger.warning("Database file isn't clean, creating backup. Mitigated?");
