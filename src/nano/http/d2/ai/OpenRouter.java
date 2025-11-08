@@ -179,16 +179,6 @@ public class OpenRouter {
                         tools.put(t.desc);
                     }
                     body.put("tools", tools);
-
-                    NanoJSON providers = new NanoJSON();
-                    JSONArray quantizations = new JSONArray();
-                    // X int4 int8 -> too bad to be useful
-                    quantizations.put("fp8");
-                    quantizations.put("bf16");
-                    quantizations.put("fp16");
-                    quantizations.put("fp32");
-                    providers.put("quantizations", quantizations);
-                    body.put("providers", providers);
                 }
 
 
