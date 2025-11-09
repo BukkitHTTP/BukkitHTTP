@@ -11,7 +11,6 @@ public class Message {
     public String content;
     public transient String tool_calling_id = null;
     public transient JSONArray tool_called = null;
-    public transient String reasoning = null;
     public boolean trans = false;
 
     @SuppressWarnings("unused")
@@ -35,7 +34,6 @@ public class Message {
         return "Message{" +
                 "role='" + role + '\'' +
                 ", content='" + content + '\'' +
-                (reasoning == null ? "" : ", reasoning='" + reasoning + '\'') +
                 (tool_calling_id == null ? "" : ", tool_calling_id='" + tool_calling_id + '\'') +
                 (tool_called == null ? "" : ", tool_called=" + tool_called) +
                 (trans ? "TRANS" : "") +

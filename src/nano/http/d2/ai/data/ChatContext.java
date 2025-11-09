@@ -5,6 +5,8 @@ import nano.http.d2.ai.Tool;
 import nano.http.d2.database.internal.SerlBridge;
 import nano.http.d2.database.internal.SerlClz;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +17,10 @@ public class ChatContext {
     public transient volatile boolean cancelled = false;
     public transient List<Tool> tools = new ArrayList<>();
 
-    public String model = "z-ai/glm-4.6:floor";
+    public String model = "z-ai/glm-4.6:exacto";
     public boolean noThinking = true;
     public List<Message> messages = new ArrayList<>();
+    public transient String imageB64 = null;
 
 
     public ChatContext() {
@@ -51,7 +54,26 @@ public class ChatContext {
     }
 
     public void complete() {
-        OpenRouter.complete(this, null);
+        OpenRouter.complete(this, null, true);
+    }
+
+    public void complete(Runnable toolPartialCallback) {
+        OpenRouter.complete(this, toolPartialCallback, true);
+    }
+
+    public void complete(boolean cleanup) {
+        OpenRouter.complete(this, null, cleanup);
+    }
+
+    public void addImage(byte[] image) {
+        this.imageB64 = "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(image);
+    }
+
+    public void addImage(File f) {
+        try (FileInputStream fis = new FileInputStream(f)) {
+            addImage(fis.readAllBytes());
+        } catch (Exception ignored) {
+        }
     }
 
     @Override

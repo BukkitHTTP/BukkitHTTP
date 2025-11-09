@@ -108,11 +108,7 @@ public class OpenRouter {
         }
     }
 
-    public static void complete(ChatContext ctx) {
-        complete(ctx, null);
-    }
-
-    public static void complete(ChatContext ctx, Runnable toolPartialCallback) {
+    public static void complete(ChatContext ctx, Runnable toolPartialCallback, boolean cleanup) {
         ctx.cancelled = false;
         if (or_key == null || or_key.isEmpty()) {
             ctx.messages.add(new Message("assistant", "Error: OpenRouter API key not set"));
@@ -148,6 +144,20 @@ public class OpenRouter {
                     if (msg.trans && !ctx.noThinking && msg.role.equals("assistant")) {
                         m.put("content", "");
                         m.put("reasoning", msg.content);
+                    } else if (!msg.trans && msg.role.equals("user") && ctx.imageB64 != null) {
+                        JSONArray content = new JSONArray();
+                        NanoJSON textPart = new NanoJSON();
+                        textPart.put("type", "text");
+                        textPart.put("text", msg.content);
+                        content.put(textPart);
+                        NanoJSON imagePart = new NanoJSON();
+                        imagePart.put("type", "image_url");
+                        NanoJSON urlPart = new NanoJSON();
+                        urlPart.put("url", ctx.imageB64);
+                        imagePart.put("image_url", urlPart);
+                        ctx.imageB64 = null; // Only attach image once
+                        content.put(imagePart);
+                        m.put("content", content);
                     } else {
                         m.put("content", msg.content);
                     }
@@ -158,10 +168,6 @@ public class OpenRouter {
                     if (msg.tool_called != null) {
                         m.put("tool_calls", msg.tool_called);
                     }
-                    if (msg.reasoning != null) {
-                        m.put("reasoning", msg.reasoning);
-                    }
-
 
                     messages.put(m);
                 }
@@ -277,8 +283,10 @@ public class OpenRouter {
         } catch (Exception ex) {
             ctx.messages.add(new Message("assistant", "Error: " + ex));
         } finally {
-            if (needTrim) {
-                ctx.trimTrans();
+            if (cleanup) {
+                if (needTrim) {
+                    ctx.trimTrans();
+                }
             }
         }
     }
