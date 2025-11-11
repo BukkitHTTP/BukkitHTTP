@@ -16,10 +16,37 @@ import java.util.function.Consumer;
 public class OpenRouter {
     public static String or_key;
 
+    public static double getCredits(String key) {
+        try {
+            URL endpoint = new URL("https://openrouter.ai/api/v1/key");
+            HttpURLConnection con = (HttpURLConnection) endpoint.openConnection();
+            con.setRequestMethod("GET");
+            con.setRequestProperty("Authorization", "Bearer " + or_key);
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setRequestProperty("X-Title", "BukkitHTTP");
+            con.setRequestProperty("HTTP-Referer", "https://github.com/BukkitHTTP/BukkitHTTP");
+
+            InputStream is;
+            try {
+                is = con.getInputStream();
+            } catch (Exception ex) {
+                is = con.getErrorStream();
+            }
+            NanoJSON response = new NanoJSON(new String(is.readAllBytes(), StandardCharsets.UTF_8));
+            return response.getJSONObject("data").getDouble("limit_remaining");
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
     public static void stream(ChatContext ctx, Consumer<StreamingResult> callback) {
+        String key = or_key;
+        if (ctx.key_override != null) {
+            key = ctx.key_override;
+        }
         ctx.cancelled = false;
         StreamingResult sr = new StreamingResult();
-        if (or_key == null || or_key.isEmpty()) {
+        if (key == null || key.isEmpty()) {
             sr.isError = true;
             sr.isFinished = true;
             sr.delta = "OpenRouter API key not set";
@@ -109,8 +136,12 @@ public class OpenRouter {
     }
 
     public static void complete(ChatContext ctx, Runnable toolPartialCallback, boolean cleanup) {
+        String key = or_key;
+        if (ctx.key_override != null) {
+            key = ctx.key_override;
+        }
         ctx.cancelled = false;
-        if (or_key == null || or_key.isEmpty()) {
+        if (key == null || key.isEmpty()) {
             ctx.messages.add(new Message("assistant", "Error: OpenRouter API key not set"));
         }
         boolean needTrim = false;
@@ -134,6 +165,8 @@ public class OpenRouter {
                 con.setRequestProperty("Content-Type", "application/json");
                 con.setRequestProperty("X-Title", "BukkitHTTP");
                 con.setRequestProperty("HTTP-Referer", "https://github.com/BukkitHTTP/BukkitHTTP");
+                con.setConnectTimeout(10000);
+                con.setReadTimeout(60000);
                 con.setDoOutput(true);
                 JSONArray messages = new JSONArray();
 
@@ -150,13 +183,17 @@ public class OpenRouter {
                         textPart.put("type", "text");
                         textPart.put("text", msg.content);
                         content.put(textPart);
-                        NanoJSON imagePart = new NanoJSON();
-                        imagePart.put("type", "image_url");
-                        NanoJSON urlPart = new NanoJSON();
-                        urlPart.put("url", ctx.imageB64);
-                        imagePart.put("image_url", urlPart);
+
+                        for (String str : ctx.imageB64) {
+                            NanoJSON imagePart = new NanoJSON();
+                            imagePart.put("type", "image_url");
+                            NanoJSON urlPart = new NanoJSON();
+                            urlPart.put("url", str);
+                            imagePart.put("image_url", urlPart);
+                            content.put(imagePart);
+                        }
+
                         ctx.imageB64 = null; // Only attach image once
-                        content.put(imagePart);
                         m.put("content", content);
                     } else {
                         m.put("content", msg.content);
@@ -238,14 +275,14 @@ public class OpenRouter {
 
                                 String resp = "Tool-Janitor: You can NOT call the same tool with the same argument twice in a row. Refusing to call tool. YOU WILL BE BANNED FROM TOOL USAGE IF YOU KEEP DOING THIS.";
                                 String strArg = args.getString(foundTool.queryName);
+                                if (toolPartialCallback != null) {
+                                    toolPartialCallback.run();
+                                }
                                 if (!strArg.equals(lastArg)) {
                                     resp = foundTool.func.apply(strArg);
                                 }
                                 lastArg = strArg;
 
-                                if (toolPartialCallback != null) {
-                                    toolPartialCallback.run();
-                                }
                                 Message toolMsg = new Message("tool", resp);
                                 toolMsg.trans = true;
                                 toolMsg.tool_calling_id = callId;

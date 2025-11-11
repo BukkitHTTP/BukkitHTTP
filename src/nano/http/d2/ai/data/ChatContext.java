@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 @SerlClz
@@ -17,10 +18,11 @@ public class ChatContext {
     public transient volatile boolean cancelled = false;
     public transient List<Tool> tools = new ArrayList<>();
 
+    public String key_override = null;
     public String model = "z-ai/glm-4.6:exacto";
     public boolean noThinking = true;
     public List<Message> messages = new ArrayList<>();
-    public transient String imageB64 = null;
+    public transient List<String> imageB64 = null;
 
 
     public ChatContext() {
@@ -66,7 +68,11 @@ public class ChatContext {
     }
 
     public void addImage(byte[] image) {
-        this.imageB64 = "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(image);
+        if (this.imageB64 == null) {
+            this.imageB64 = new ArrayList<>();
+        }
+        String B64 = "data:image/png;base64," + Base64.getEncoder().encodeToString(image);
+        this.imageB64.add(B64);
     }
 
     public void addImage(File f) {
