@@ -96,8 +96,12 @@ public class HTTPSession implements Runnable {
             // out whether we have already consumed part of body, if we
             // have reached the end of the data to be sent or we should
             // expect the first byte of the body at the next read.
+
+            // Fxxk. Who wrote this +1.
+            // This bug should be around here for like 20 years.
+            // -hs, 2025/11/12
             if (splitbyte < rlen) {
-                size -= rlen - splitbyte + 1;
+                size -= rlen - splitbyte;
             } else if (!sbfound || size == Long.MAX_VALUE) {
                 size = 0;
             }
@@ -172,8 +176,7 @@ public class HTTPSession implements Runnable {
                         postLine.append(String.valueOf(pbuf, 0, read));
                         read = br.read(pbuf);
                     }
-                    postLine = new StringBuilder(postLine.toString().trim());
-                    ParmsDecoder.decodeParms(postLine.toString(), parms);
+                    ParmsDecoder.decodeParms(postLine.toString().trim(), parms);
                 }
             }
 
@@ -227,7 +230,6 @@ public class HTTPSession implements Runnable {
             }
 
             String uri = st.nextToken();
-
             // Decode parameters from the URI
             int qmi = uri.indexOf('?');
             if (qmi >= 0) {

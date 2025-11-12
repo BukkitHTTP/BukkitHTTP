@@ -128,8 +128,13 @@ public class SerlImpl {
         if (length == -1) return null;
         if (length < 0) throw new IOException("Invalid string length: " + length);
         byte[] bytes = new byte[length];
-        int read = is.read(bytes);
-        if (read != length) throw new IOException("Unexpected end of stream");
+        int read = 0;
+        while (true) {
+            int r = is.read(bytes, read, length - read);
+            if (r == -1) break;
+            read += r;
+            if (read == length) break;
+        }
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
@@ -210,6 +215,9 @@ public class SerlImpl {
                 List<Field> serializableFields = new ArrayList<>();
                 for (Field field : fields) {
                     if (!(Modifier.isStatic(field.getModifiers()) || Modifier.isTransient(field.getModifiers()))) {
+                        if (Modifier.isFinal(field.getModifiers())) {
+                            throw new IOException("All final fields shall be transient in serializable classes. Offending field: " + cls.getName() + "." + field.getName());
+                        }
                         String name = field.getName();
                         if (!name.startsWith("_") && !name.startsWith("$") && !name.equals("serialVersionUID")) {
                             serializableFields.add(field);

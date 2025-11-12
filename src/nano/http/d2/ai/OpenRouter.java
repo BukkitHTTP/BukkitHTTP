@@ -15,13 +15,14 @@ import java.util.function.Consumer;
 
 public class OpenRouter {
     public static String or_key;
+    public static int max_token = 0;
 
     public static double getCredits(String key) {
         try {
             URL endpoint = new URL("https://openrouter.ai/api/v1/key");
             HttpURLConnection con = (HttpURLConnection) endpoint.openConnection();
             con.setRequestMethod("GET");
-            con.setRequestProperty("Authorization", "Bearer " + or_key);
+            con.setRequestProperty("Authorization", "Bearer " + key);
             con.setRequestProperty("Content-Type", "application/json");
             con.setRequestProperty("X-Title", "BukkitHTTP");
             con.setRequestProperty("HTTP-Referer", "https://github.com/BukkitHTTP/BukkitHTTP");
@@ -68,7 +69,7 @@ public class OpenRouter {
             URL endpoint = new URL("https://openrouter.ai/api/v1/chat/completions");
             HttpURLConnection con = (HttpURLConnection) endpoint.openConnection();
             con.setRequestMethod("POST");
-            con.setRequestProperty("Authorization", "Bearer " + or_key);
+            con.setRequestProperty("Authorization", "Bearer " + key);
             con.setRequestProperty("Content-Type", "application/json");
             con.setRequestProperty("X-Title", "BukkitHTTP");
             con.setRequestProperty("HTTP-Referer", "https://github.com/BukkitHTTP/BukkitHTTP");
@@ -86,6 +87,9 @@ public class OpenRouter {
                     .put("stream", true);
             NanoJSON reasoning = new NanoJSON().put("enabled", !ctx.noThinking);
             body.put("reasoning", reasoning);
+            if (max_token > 0) {
+                body.put("max_tokens", max_token);
+            }
             con.getOutputStream().write(body.toString().getBytes(StandardCharsets.UTF_8));
 
             InputStream is;
@@ -161,7 +165,7 @@ public class OpenRouter {
                 URL endpoint = new URL("https://openrouter.ai/api/v1/chat/completions");
                 HttpURLConnection con = (HttpURLConnection) endpoint.openConnection();
                 con.setRequestMethod("POST");
-                con.setRequestProperty("Authorization", "Bearer " + or_key);
+                con.setRequestProperty("Authorization", "Bearer " + key);
                 con.setRequestProperty("Content-Type", "application/json");
                 con.setRequestProperty("X-Title", "BukkitHTTP");
                 con.setRequestProperty("HTTP-Referer", "https://github.com/BukkitHTTP/BukkitHTTP");
@@ -216,6 +220,10 @@ public class OpenRouter {
                         .put("enabled", !ctx.noThinking)
                         .put("effort", "low");
                 body.put("reasoning", reasoning);
+                if (max_token > 0) {
+                    body.put("max_tokens", max_token);
+                }
+
                 if (!ctx.tools.isEmpty()) {
                     JSONArray tools = new JSONArray();
                     for (Tool t : ctx.tools) {
