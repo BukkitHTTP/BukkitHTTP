@@ -16,6 +16,10 @@ import java.util.function.Consumer;
 public class OpenRouter {
     public static String or_key;
     public static int max_token = 0;
+    public static int read_timeout = 60000;
+    public static int max_calls = 20;
+    public static String name = "BukkitHTTP";
+    public static String url = "https://github.com/BukkitHTTP/BukkitHTTP";
 
     public static double getCredits(String key) {
         try {
@@ -24,8 +28,8 @@ public class OpenRouter {
             con.setRequestMethod("GET");
             con.setRequestProperty("Authorization", "Bearer " + key);
             con.setRequestProperty("Content-Type", "application/json");
-            con.setRequestProperty("X-Title", "BukkitHTTP");
-            con.setRequestProperty("HTTP-Referer", "https://github.com/BukkitHTTP/BukkitHTTP");
+            con.setRequestProperty("X-Title", name);
+            con.setRequestProperty("HTTP-Referer", url);
 
             InputStream is;
             try {
@@ -71,8 +75,8 @@ public class OpenRouter {
             con.setRequestMethod("POST");
             con.setRequestProperty("Authorization", "Bearer " + key);
             con.setRequestProperty("Content-Type", "application/json");
-            con.setRequestProperty("X-Title", "BukkitHTTP");
-            con.setRequestProperty("HTTP-Referer", "https://github.com/BukkitHTTP/BukkitHTTP");
+            con.setRequestProperty("X-Title", name);
+            con.setRequestProperty("HTTP-Referer", url);
             con.setDoOutput(true);
             JSONArray messages = new JSONArray();
 
@@ -150,7 +154,7 @@ public class OpenRouter {
         }
         boolean needTrim = false;
         boolean needSkip = true;
-        int iterLimit = 20;
+        int iterLimit = max_calls;
         try {
             String lastArg = null;
             while (true) {
@@ -167,10 +171,10 @@ public class OpenRouter {
                 con.setRequestMethod("POST");
                 con.setRequestProperty("Authorization", "Bearer " + key);
                 con.setRequestProperty("Content-Type", "application/json");
-                con.setRequestProperty("X-Title", "BukkitHTTP");
-                con.setRequestProperty("HTTP-Referer", "https://github.com/BukkitHTTP/BukkitHTTP");
+                con.setRequestProperty("X-Title", name);
+                con.setRequestProperty("HTTP-Referer", url);
                 con.setConnectTimeout(10000);
-                con.setReadTimeout(60000);
+                con.setReadTimeout(read_timeout);
                 con.setDoOutput(true);
                 JSONArray messages = new JSONArray();
 
