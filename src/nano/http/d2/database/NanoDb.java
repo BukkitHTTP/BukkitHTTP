@@ -11,7 +11,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.function.Supplier;
 
-public class NanoDb<T extends Object> {
+public class NanoDb<T> {
     private static final SerlBridge bridge = new SerlBridge("LET ME IN");
     private final File file;
     private final File tempFile;

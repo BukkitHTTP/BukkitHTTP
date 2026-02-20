@@ -16,22 +16,30 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class WebSocketClient {
-    private static final String base = "GET {URI} HTTP/1.1\r\n" + "Host: {HOST}\r\n" + "Upgrade: websocket\r\n" + "Connection: Upgrade\r\n" + "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n" + "Sec-WebSocket-Version: 13\r\n\r\n";
+    private static final String base = "GET {URI} HTTP/1.1\r\n" + "Host: {HOST}\r\n" + "Upgrade: websocket\r\n" + "Connection: Upgrade\r\n" + "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n" + "Sec-WebSocket-Version: 13{EXTRA}\r\n\r\n";
     private final InputStream inputStream;
     private final OutputStream outputStream;
     private boolean isClosed = false;
 
     public WebSocketClient(String uri) throws IOException {
-        this(uri, Proxy.NO_PROXY);
+        this(uri, Proxy.NO_PROXY, "");
     }
 
     public WebSocketClient(String uri, Proxy p) throws IOException {
+        this(uri, p, "");
+    }
+
+    public WebSocketClient(String uri, String extra) throws IOException {
+        this(uri, Proxy.NO_PROXY, extra);
+    }
+
+    public WebSocketClient(String uri, Proxy p, String extra) throws IOException {
         String[] split = uri.split("://");
         String protocol = split[0];
         boolean ssl = false;
-        if (protocol.equalsIgnoreCase("wss")) {
+        if (protocol.equalsIgnoreCase("wss") || protocol.equalsIgnoreCase("https")) {
             ssl = true;
-        } else if (!protocol.equalsIgnoreCase("ws")) {
+        } else if (!protocol.equalsIgnoreCase("ws") && !protocol.equalsIgnoreCase("http")) {
             throw new IOException("Invalid protocol: " + protocol);
         }
         String host, path;
@@ -56,7 +64,7 @@ public class WebSocketClient {
             socket = new Socket(p);
             socket.connect(new InetSocketAddress(ip, port));
         }
-        socket.getOutputStream().write(base.replace("{URI}", path).replace("{HOST}", host).getBytes(StandardCharsets.UTF_8));
+        socket.getOutputStream().write(base.replace("{URI}", path).replace("{HOST}", host).replace("{EXTRA}", extra).getBytes(StandardCharsets.UTF_8));
         Scanner scanner = new Scanner(socket.getInputStream());
         boolean flag = false;
         while (scanner.hasNextLine()) {

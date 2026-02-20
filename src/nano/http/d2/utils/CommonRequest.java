@@ -2,16 +2,34 @@ package nano.http.d2.utils;
 
 import java.io.ByteArrayOutputStream;
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 @SuppressWarnings("unused")
 public class CommonRequest {
+    public static int connTimeout = 0;
+
+    static {
+        // https://stackoverflow.com/questions/8335501/does-httpurlconnection-censor-some-headers-notably-origin
+        // Oracle fuck you
+        System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+    }
+
     public static String get(String dest, Properties header) throws Exception {
+        return get(dest, header, Proxy.NO_PROXY);
+    }
+
+    public static String get(String dest, Properties header, Proxy p) throws Exception {
         URL url = new URL(dest);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
+        if (connTimeout > 0) {
+            con.setConnectTimeout(connTimeout);
+            con.setReadTimeout(connTimeout);
+        }
         con.setRequestMethod("GET");
+
         if (header != null) {
             for (String s : header.stringPropertyNames()) {
                 con.setRequestProperty(s, header.getProperty(s));
@@ -21,8 +39,16 @@ public class CommonRequest {
     }
 
     public static byte[] getBytes(String dest, Properties header) throws Exception {
+        return getBytes(dest, header, Proxy.NO_PROXY);
+    }
+
+    public static byte[] getBytes(String dest, Properties header, Proxy p) throws Exception {
         URL url = new URL(dest);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
+        if (connTimeout > 0) {
+            con.setConnectTimeout(connTimeout);
+            con.setReadTimeout(connTimeout);
+        }
         con.setRequestMethod("GET");
         if (header != null) {
             for (String s : header.stringPropertyNames()) {
@@ -33,8 +59,16 @@ public class CommonRequest {
     }
 
     public static String post(String dest, String data, Properties header) throws Exception {
+        return post(dest, data, header, Proxy.NO_PROXY);
+    }
+
+    public static String post(String dest, String data, Properties header, Proxy p) throws Exception {
         URL url = new URL(dest);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
+        if (connTimeout > 0) {
+            con.setConnectTimeout(connTimeout);
+            con.setReadTimeout(connTimeout);
+        }
         con.setRequestMethod("POST");
         if (header != null) {
             for (String s : header.stringPropertyNames()) {
@@ -47,6 +81,10 @@ public class CommonRequest {
     }
 
     public static String parmPost(String dest, Properties params, Properties header) throws Exception {
+        return parmPost(dest, params, header, Proxy.NO_PROXY);
+    }
+
+    public static String parmPost(String dest, Properties params, Properties header, Proxy p) throws Exception {
         StringBuilder paramStr = new StringBuilder();
         if (params != null) {
             for (String s : params.stringPropertyNames()) {
@@ -57,7 +95,11 @@ public class CommonRequest {
             }
         }
         URL url = new URL(dest);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
+        if (connTimeout > 0) {
+            con.setConnectTimeout(connTimeout);
+            con.setReadTimeout(connTimeout);
+        }
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
         if (header != null) {
@@ -73,8 +115,16 @@ public class CommonRequest {
     }
 
     public static String jsonPost(String dest, String data, Properties header) throws Exception {
+        return jsonPost(dest, data, header, Proxy.NO_PROXY);
+    }
+
+    public static String jsonPost(String dest, String data, Properties header, Proxy p) throws Exception {
         URL url = new URL(dest);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
+        if (connTimeout > 0) {
+            con.setConnectTimeout(connTimeout);
+            con.setReadTimeout(connTimeout);
+        }
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
         if (header != null) {
@@ -90,6 +140,10 @@ public class CommonRequest {
     }
 
     public static String filePost(String dest, String filename, String mime, byte[] data, Properties header) throws Exception {
+        return filePost(dest, filename, mime, data, header, Proxy.NO_PROXY);
+    }
+
+    public static String filePost(String dest, String filename, String mime, byte[] data, Properties header, Proxy p) throws Exception {
         String boundary = "HsBoUnDaRy";
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(("--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
@@ -101,7 +155,11 @@ public class CommonRequest {
         byte[] requestBodyBytes = baos.toByteArray();
         baos.close();
         URL url = new URL(dest);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
+        if (connTimeout > 0) {
+            con.setConnectTimeout(connTimeout);
+            con.setReadTimeout(connTimeout);
+        }
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
         if (header != null) {

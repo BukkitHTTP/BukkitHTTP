@@ -159,9 +159,6 @@ public class OpenRouter {
             String lastArg = null;
             while (true) {
                 iterLimit--;
-                if (iterLimit < 0) {
-                    ctx.cancelled = true;
-                }
                 if (ctx.cancelled) {
                     ctx.messages.add(new Message("assistant", "Error: cancelled"));
                     break;
@@ -228,7 +225,7 @@ public class OpenRouter {
                     body.put("max_tokens", max_token);
                 }
 
-                if (!ctx.tools.isEmpty()) {
+                if (!ctx.tools.isEmpty() && iterLimit > 0) {
                     JSONArray tools = new JSONArray();
                     for (Tool t : ctx.tools) {
                         tools.put(t.desc);
@@ -326,7 +323,7 @@ public class OpenRouter {
                     }
                 }
 
-                ctx.messages.add(new Message("assistant", c));
+                ctx.messages.add(new Message("assistant", c.isEmpty() ? r : c));
                 break;
             }
         } catch (Exception ex) {

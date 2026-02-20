@@ -410,8 +410,8 @@ public class SerlImpl {
         if (classWithId.__ != null) {
             try {
                 classWithId.__.invoke(obj);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new IOException("Class refused to get deserialized: " + classWithId.cls.getName(), e);
+            } catch (Throwable t) {
+                throw new IOException("Class refused to get deserialized: " + classWithId.cls.getName(), t);
             }
         }
         return obj;
