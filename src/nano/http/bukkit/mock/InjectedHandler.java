@@ -3,19 +3,18 @@ package nano.http.bukkit.mock;
 
 import nano.http.bukkit.mock.dirty.MakeAccessible;
 import nano.http.bukkit.mock.impl.ModifiedCon;
+import nano.http.bukkit.mock.impl.WrappedCon;
 import nano.http.d2.core.ParmsDecoder;
 import nano.http.d2.serve.ServeProvider;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.net.Proxy;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLStreamHandler;
+import java.net.*;
 import java.util.Properties;
 
 public class InjectedHandler extends URLStreamHandler {
+    public static boolean debug = false;
     public final String protocol;
 
     public InjectedHandler(String protocol) {
@@ -26,7 +25,12 @@ public class InjectedHandler extends URLStreamHandler {
     protected URLConnection openConnection(URL u) throws IOException {
         ServeProvider provider = InjectRegistry.get(u.getHost());
         if (provider == null) {
-            return byReal(u);
+            URLConnection uc = byReal(u);
+            if (debug && uc instanceof HttpURLConnection) {
+                System.out.println("InjectedHandler: " + u);
+                return new WrappedCon((HttpURLConnection) uc, u);
+            }
+            return uc;
         }
 
         Properties query = new Properties();

@@ -1,0 +1,6 @@
+name: BH
+main: nano.http.bukkit.mock.Mocker
+version: unknown
+api-version: 1.13
+author: huzpsb
+description: Debugger 4 everyone

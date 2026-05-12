@@ -250,7 +250,7 @@ public class OpenRouter {
                     if (response.hasNonNull("tool_calls")) {
                         JSONArray calls = response.getJSONArray("tool_calls");
                         if (!calls.isEmpty()) {
-                            Message memoHolder = new Message("assistant", response.getString("content"));
+                            Message memoHolder = new Message("assistant", response.optString("content", "Error: Empty"));
                             if (response.hasNonNull("reasoning")) {
                                 memoHolder.content = response.getString("reasoning");
                             }

@@ -10,7 +10,7 @@ public class InjectRegistry {
 
     private static boolean initialized = false;
 
-    private static void doInject() {
+    public static void doInject() {
         if (initialized) {
             return;
         }
