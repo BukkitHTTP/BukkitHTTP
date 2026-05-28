@@ -1,6 +1,8 @@
 package nano.http.d2.utils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
@@ -24,18 +26,24 @@ public class CommonRequest {
     public static String get(String dest, Properties header, Proxy p) throws Exception {
         URL url = new URL(dest);
         HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
-        if (connTimeout > 0) {
-            con.setConnectTimeout(connTimeout);
-            con.setReadTimeout(connTimeout);
-        }
-        con.setRequestMethod("GET");
-
-        if (header != null) {
-            for (String s : header.stringPropertyNames()) {
-                con.setRequestProperty(s, header.getProperty(s));
+        try {
+            if (connTimeout > 0) {
+                con.setConnectTimeout(connTimeout);
+                con.setReadTimeout(connTimeout);
             }
+            con.setRequestMethod("GET");
+
+            if (header != null) {
+                for (String s : header.stringPropertyNames()) {
+                    con.setRequestProperty(s, header.getProperty(s));
+                }
+            }
+            try (InputStream in = con.getInputStream()) {
+                return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        } finally {
+            con.disconnect();
         }
-        return new String(con.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
     public static byte[] getBytes(String dest, Properties header) throws Exception {
@@ -45,17 +53,23 @@ public class CommonRequest {
     public static byte[] getBytes(String dest, Properties header, Proxy p) throws Exception {
         URL url = new URL(dest);
         HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
-        if (connTimeout > 0) {
-            con.setConnectTimeout(connTimeout);
-            con.setReadTimeout(connTimeout);
-        }
-        con.setRequestMethod("GET");
-        if (header != null) {
-            for (String s : header.stringPropertyNames()) {
-                con.setRequestProperty(s, header.getProperty(s));
+        try {
+            if (connTimeout > 0) {
+                con.setConnectTimeout(connTimeout);
+                con.setReadTimeout(connTimeout);
             }
+            con.setRequestMethod("GET");
+            if (header != null) {
+                for (String s : header.stringPropertyNames()) {
+                    con.setRequestProperty(s, header.getProperty(s));
+                }
+            }
+            try (InputStream in = con.getInputStream()) {
+                return in.readAllBytes();
+            }
+        } finally {
+            con.disconnect();
         }
-        return con.getInputStream().readAllBytes();
     }
 
     public static String post(String dest, String data, Properties header) throws Exception {
@@ -65,19 +79,27 @@ public class CommonRequest {
     public static String post(String dest, String data, Properties header, Proxy p) throws Exception {
         URL url = new URL(dest);
         HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
-        if (connTimeout > 0) {
-            con.setConnectTimeout(connTimeout);
-            con.setReadTimeout(connTimeout);
-        }
-        con.setRequestMethod("POST");
-        if (header != null) {
-            for (String s : header.stringPropertyNames()) {
-                con.setRequestProperty(s, header.getProperty(s));
+        try {
+            if (connTimeout > 0) {
+                con.setConnectTimeout(connTimeout);
+                con.setReadTimeout(connTimeout);
             }
+            con.setRequestMethod("POST");
+            if (header != null) {
+                for (String s : header.stringPropertyNames()) {
+                    con.setRequestProperty(s, header.getProperty(s));
+                }
+            }
+            con.setDoOutput(true);
+            try (OutputStream out = con.getOutputStream()) {
+                out.write(data.getBytes(StandardCharsets.UTF_8));
+            }
+            try (InputStream in = con.getInputStream()) {
+                return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        } finally {
+            con.disconnect();
         }
-        con.setDoOutput(true);
-        con.getOutputStream().write(data.getBytes(StandardCharsets.UTF_8));
-        return new String(con.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
     public static String parmPost(String dest, Properties params, Properties header) throws Exception {
@@ -96,22 +118,30 @@ public class CommonRequest {
         }
         URL url = new URL(dest);
         HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
-        if (connTimeout > 0) {
-            con.setConnectTimeout(connTimeout);
-            con.setReadTimeout(connTimeout);
-        }
-        con.setRequestMethod("POST");
-        con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-        if (header != null) {
-            for (String s : header.stringPropertyNames()) {
-                con.setRequestProperty(s, header.getProperty(s));
+        try {
+            if (connTimeout > 0) {
+                con.setConnectTimeout(connTimeout);
+                con.setReadTimeout(connTimeout);
             }
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            if (header != null) {
+                for (String s : header.stringPropertyNames()) {
+                    con.setRequestProperty(s, header.getProperty(s));
+                }
+            }
+            con.setDoOutput(true);
+            byte[] requestBodyBytes = paramStr.toString().getBytes(StandardCharsets.UTF_8);
+            con.setRequestProperty("Content-Length", Integer.toString(requestBodyBytes.length));
+            try (OutputStream out = con.getOutputStream()) {
+                out.write(requestBodyBytes);
+            }
+            try (InputStream in = con.getInputStream()) {
+                return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        } finally {
+            con.disconnect();
         }
-        con.setDoOutput(true);
-        byte[] requestBodyBytes = paramStr.toString().getBytes(StandardCharsets.UTF_8);
-        con.setRequestProperty("Content-Length", Integer.toString(requestBodyBytes.length));
-        con.getOutputStream().write(requestBodyBytes);
-        return new String(con.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
     public static String jsonPost(String dest, String data, Properties header) throws Exception {
@@ -121,22 +151,30 @@ public class CommonRequest {
     public static String jsonPost(String dest, String data, Properties header, Proxy p) throws Exception {
         URL url = new URL(dest);
         HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
-        if (connTimeout > 0) {
-            con.setConnectTimeout(connTimeout);
-            con.setReadTimeout(connTimeout);
-        }
-        con.setRequestMethod("POST");
-        con.setRequestProperty("Content-Type", "application/json");
-        if (header != null) {
-            for (String s : header.stringPropertyNames()) {
-                con.setRequestProperty(s, header.getProperty(s));
+        try {
+            if (connTimeout > 0) {
+                con.setConnectTimeout(connTimeout);
+                con.setReadTimeout(connTimeout);
             }
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/json");
+            if (header != null) {
+                for (String s : header.stringPropertyNames()) {
+                    con.setRequestProperty(s, header.getProperty(s));
+                }
+            }
+            con.setDoOutput(true);
+            byte[] requestBodyBytes = data.getBytes(StandardCharsets.UTF_8);
+            con.setRequestProperty("Content-Length", Integer.toString(requestBodyBytes.length));
+            try (OutputStream out = con.getOutputStream()) {
+                out.write(requestBodyBytes);
+            }
+            try (InputStream in = con.getInputStream()) {
+                return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        } finally {
+            con.disconnect();
         }
-        con.setDoOutput(true);
-        byte[] requestBodyBytes = data.getBytes(StandardCharsets.UTF_8);
-        con.setRequestProperty("Content-Length", Integer.toString(requestBodyBytes.length));
-        con.getOutputStream().write(requestBodyBytes);
-        return new String(con.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 
     public static String filePost(String dest, String filename, String mime, byte[] data, Properties header) throws Exception {
@@ -156,20 +194,28 @@ public class CommonRequest {
         baos.close();
         URL url = new URL(dest);
         HttpURLConnection con = (HttpURLConnection) url.openConnection(p);
-        if (connTimeout > 0) {
-            con.setConnectTimeout(connTimeout);
-            con.setReadTimeout(connTimeout);
-        }
-        con.setRequestMethod("POST");
-        con.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-        if (header != null) {
-            for (String s : header.stringPropertyNames()) {
-                con.setRequestProperty(s, header.getProperty(s));
+        try {
+            if (connTimeout > 0) {
+                con.setConnectTimeout(connTimeout);
+                con.setReadTimeout(connTimeout);
             }
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+            if (header != null) {
+                for (String s : header.stringPropertyNames()) {
+                    con.setRequestProperty(s, header.getProperty(s));
+                }
+            }
+            con.setRequestProperty("Content-Length", String.valueOf(requestBodyBytes.length));
+            con.setDoOutput(true);
+            try (OutputStream out = con.getOutputStream()) {
+                out.write(requestBodyBytes);
+            }
+            try (InputStream in = con.getInputStream()) {
+                return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        } finally {
+            con.disconnect();
         }
-        con.setRequestProperty("Content-Length", String.valueOf(requestBodyBytes.length));
-        con.setDoOutput(true);
-        con.getOutputStream().write(requestBodyBytes);
-        return new String(con.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
 }
