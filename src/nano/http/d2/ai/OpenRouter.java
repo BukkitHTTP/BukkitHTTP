@@ -20,10 +20,11 @@ public class OpenRouter {
     public static int max_calls = 20;
     public static String name = "BukkitHTTP";
     public static String url = "https://github.com/BukkitHTTP/BukkitHTTP";
+    public static String base_url = "https://openrouter.ai/api/v1";
 
     public static double getCredits(String key) {
         try {
-            URL endpoint = new URL("https://openrouter.ai/api/v1/key");
+            URL endpoint = new URL(base_url + "/key");
             HttpURLConnection con = (HttpURLConnection) endpoint.openConnection();
             con.setRequestMethod("GET");
             con.setRequestProperty("Authorization", "Bearer " + key);
@@ -70,7 +71,7 @@ public class OpenRouter {
 
         String lastText = null;
         try {
-            URL endpoint = new URL("https://openrouter.ai/api/v1/chat/completions");
+            URL endpoint = new URL(base_url + "/chat/completions");
             HttpURLConnection con = (HttpURLConnection) endpoint.openConnection();
             con.setRequestMethod("POST");
             con.setRequestProperty("Authorization", "Bearer " + key);
@@ -163,7 +164,7 @@ public class OpenRouter {
                     ctx.messages.add(new Message("assistant", "Error: cancelled"));
                     break;
                 }
-                URL endpoint = new URL("https://openrouter.ai/api/v1/chat/completions");
+                URL endpoint = new URL(base_url + "/chat/completions");
                 HttpURLConnection con = (HttpURLConnection) endpoint.openConnection();
                 con.setRequestMethod("POST");
                 con.setRequestProperty("Authorization", "Bearer " + key);
