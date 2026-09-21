@@ -1,5 +1,6 @@
 package nano.http.d2.database.internal;
 
+import java.io.ByteArrayInputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -14,6 +15,16 @@ public class DeSerlCtx {
     final Map<String, Class<?>> typeMap = new HashMap<>();
     final Map<String, Constructor<?>> constructorMap = new HashMap<>();
     boolean isDirty = false;
+
+    // The inflated source stream, bound by SerlBridge before parsing.
+    // While bound, every length field in the data can (and must) be
+    // validated against the bytes actually present, so a crafted file
+    // cannot request giant allocations up front.
+    ByteArrayInputStream source = null;
+
+    int remaining() {
+        return source == null ? Integer.MAX_VALUE : source.available();
+    }
 
     public DeSerlCtx(ClassLoader classLoader) {
         this.classLoader = classLoader;

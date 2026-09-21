@@ -34,13 +34,25 @@ public class FileServer {
             uri = uri.substring(0, uri.indexOf('?'));
         }
 
-        // Prohibit getting out of current directory
-        if (uri.contains("..")) {
-            return new Response(Status.HTTP_FORBIDDEN, Mime.MIME_PLAINTEXT, "FORBIDDEN: You know why.");
-        }
         File f = new File(homeDir, uri);
         if (!f.exists()) {
             return new Response(Status.HTTP_NOTFOUND, Mime.MIME_PLAINTEXT, "Error 404, file not found.");
+        }
+        // Containment check. The old ".." substring check could be bypassed on
+        // Windows, where File(parent, child) discards the parent as soon as the
+        // child carries a drive letter (e.g. "%20C:/Windows/x" -> trim() ->
+        // "C:/Windows/x"); it also false-positived on files whose names merely
+        // contain "..". Canonicalizing covers both cases, plus symlinks and
+        // 8.3 short names.
+        String canonical;
+        try {
+            String home = homeDir.getCanonicalPath();
+            canonical = f.getCanonicalPath();
+            if (!canonical.equals(home) && !canonical.startsWith(home + File.separator)) {
+                return new Response(Status.HTTP_FORBIDDEN, Mime.MIME_PLAINTEXT, "FORBIDDEN: You know why.");
+            }
+        } catch (IOException e) {
+            return new Response(Status.HTTP_FORBIDDEN, Mime.MIME_PLAINTEXT, "FORBIDDEN: Reading file failed.");
         }
         // List the directory, if necessary
         if (f.isDirectory()) {
@@ -115,9 +127,9 @@ public class FileServer {
         try {
             // Get MIME type from file name extension, if possible
             String mime = null;
-            int dot = f.getCanonicalPath().lastIndexOf('.');
+            int dot = canonical.lastIndexOf('.');
             if (dot >= 0) {
-                mime = Misc.theMimeTypes.get(f.getCanonicalPath().substring(dot + 1).toLowerCase());
+                mime = Misc.theMimeTypes.get(canonical.substring(dot + 1).toLowerCase());
             }
             if (mime == null) {
                 mime = Mime.MIME_DEFAULT_BINARY;

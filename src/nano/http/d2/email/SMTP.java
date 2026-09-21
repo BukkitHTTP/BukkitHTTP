@@ -45,6 +45,13 @@ public class SMTP {
     }
 
     private static boolean trySend(String host, String from, String to, String subject, String body) {
+        // Anti CRLF-injection: none of these fields may be able to terminate
+        // an SMTP command or a mail header early, and the body must not be
+        // able to forge the "." end-of-data terminator (RFC 5321 dot-stuffing).
+        from = oneLine(from);
+        to = oneLine(to);
+        subject = oneLine(subject);
+        body = dotStuff(body);
         try (Socket socket = new Socket(host, 25); BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8)); PrintWriter out = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
             if (i(in, 220)) return false;
             o(out, "HELO BukkitHTTP");
@@ -67,6 +74,30 @@ public class SMTP {
     private static void o(PrintWriter out, String s) {
         out.print(s + "\r\n");
         out.flush();
+    }
+
+    /**
+     * Replaces CR/LF with spaces so the value can never break out of the
+     * current SMTP command / mail header line.
+     */
+    private static String oneLine(String s) {
+        if (s.indexOf('\r') < 0 && s.indexOf('\n') < 0) {
+            return s;
+        }
+        return s.replace("\r", " ").replace("\n", " ");
+    }
+
+    /**
+     * RFC 5321 #4.5.2 dot-stuffing: a leading dot, or a dot right after a
+     * CRLF, would otherwise terminate the DATA block and let the rest of
+     * the "body" be interpreted as raw SMTP commands.
+     */
+    private static String dotStuff(String s) {
+        String b = s.startsWith(".") ? "." + s : s;
+        if (b.indexOf("\r\n.") >= 0) {
+            b = b.replace("\r\n.", "\r\n..");
+        }
+        return b;
     }
 
     private static boolean i(BufferedReader in, int... codes) throws IOException {

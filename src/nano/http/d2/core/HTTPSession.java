@@ -37,6 +37,9 @@ public class HTTPSession implements Runnable {
         // another component (i.e. WebSocket), so that the finally block below
         // won't close it from under the new owner.
         boolean handedOff = false;
+        // Hoisted out of the try so the finally block can clean up
+        // uploaded temp files on every exit path.
+        Properties files = new Properties();
         try {
             InputStream is = mySocket.getInputStream();
             if (is == null) {
@@ -59,7 +62,6 @@ public class HTTPSession implements Runnable {
             Properties pre = new Properties();
             Properties parms = new Properties();
             Properties header = new Properties();
-            Properties files = new Properties();
 
             // Decode the header into parms and header java properties
             decodeHeader(hin, pre, parms, header);
@@ -222,6 +224,21 @@ public class HTTPSession implements Runnable {
                 try {
                     mySocket.close();
                 } catch (Exception ignored) {
+                }
+            }
+            // Clean up the temp files this request uploaded (saveTmpFile()).
+            // They are meant to be consumed synchronously inside serve();
+            // once the response is out (or the request has failed) nobody
+            // should need them anymore. Best effort: delete() may fail on
+            // Windows if a plugin still holds the file open - fine.
+            for (Object o : files.values()) {
+                String path = (String) o;
+                if (path != null && !path.isEmpty()) {
+                    try {
+                        //noinspection ResultOfMethodCallIgnored
+                        new File(path).delete();
+                    } catch (Exception ignored) {
+                    }
                 }
             }
         }
@@ -464,6 +481,14 @@ public class HTTPSession implements Runnable {
                 while (e.hasMoreElements()) {
                     String key = (String) e.nextElement();
                     String value = header.getProperty(key);
+                    // Anti CRLF-injection: never let CR/LF into a header line,
+                    // or an attacker-controlled value (e.g. a percent-decoded
+                    // URI echoed into Location) could terminate the header
+                    // early and forge arbitrary headers / split the response.
+                    key = scrubCRLF(key);
+                    if (value != null) {
+                        value = scrubCRLF(value);
+                    }
                     pw.print(key + ": " + value + "\r\n");
                 }
             }
@@ -493,6 +518,18 @@ public class HTTPSession implements Runnable {
             } catch (Exception ignored) {
             }
         }
+    }
+
+    /**
+     * Returns the string unchanged if it contains no CR/LF, otherwise a copy
+     * with them removed. Applied to response header names/values so embedded
+     * line breaks can never split or forge headers.
+     */
+    private static String scrubCRLF(String s) {
+        if (s.indexOf('\r') < 0 && s.indexOf('\n') < 0) {
+            return s;
+        }
+        return s.replace("\r", "").replace("\n", "");
     }
 
     /**

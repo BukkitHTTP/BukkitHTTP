@@ -123,10 +123,15 @@ public class SerlImpl {
         os.write(bytes);
     }
 
-    private static String readString(InputStream is) throws IOException {
+    private static String readString(InputStream is, DeSerlCtx ctx) throws IOException {
         int length = readInt(is);
         if (length == -1) return null;
         if (length < 0) throw new IOException("Invalid string length: " + length);
+        // A well-formed string physically contains its bytes in the stream,
+        // so this can never reject a legitimate file; it only stops a crafted
+        // one from allocating length bytes before the data turns out to be
+        // 30 bytes long.
+        if (length > ctx.remaining()) throw new IOException("String length " + length + " exceeds the remaining data");
         byte[] bytes = new byte[length];
         int read = 0;
         while (true) {
@@ -262,19 +267,27 @@ public class SerlImpl {
         if (typeId == -7) return readLong(is);
         if (typeId == -8) return readFloat(is);
         if (typeId == -9) return readDouble(is);
-        if (typeId == -10) return readString(is);
+        if (typeId == -10) return readString(is, ctx);
         if (typeId == -11) {
-            String arrayTypeName = readString(is);
+            String arrayTypeName = readString(is, ctx);
             Class<?> arrayType = ctx.typeMap.get(arrayTypeName);
             if (arrayType == null) {
                 try {
-                    arrayType = Class.forName(arrayTypeName, true, ctx.classLoader);
+                    // initialize=false: allocating an array (like `new Foo[n]`)
+                    // never requires the component class to be initialized,
+                    // so a hostile class name must not get a free <clinit> run.
+                    arrayType = Class.forName(arrayTypeName, false, ctx.classLoader);
                     ctx.typeMap.put(arrayTypeName, arrayType);
                 } catch (ClassNotFoundException e) {
                     throw new IOException("Failed to load array class: " + arrayTypeName, e);
                 }
             }
             int length = readInt(is);
+            // Every element costs at least one byte in a well-formed stream,
+            // so this bound never rejects legitimate files.
+            if (length < 0 || length > ctx.remaining()) {
+                throw new IOException("Invalid array length: " + length);
+            }
             Object array = Array.newInstance(arrayType.getComponentType(), length);
             for (int i = 0; i < length; i++) {
                 Array.set(array, i, readObject(is, ctx));
@@ -283,7 +296,7 @@ public class SerlImpl {
         }
 
         if (typeId == -12) {
-            String name = readString(is);
+            String name = readString(is, ctx);
             Class<?> enumClass = ctx.typeMap.get(name);
             if (enumClass == null) {
                 try {
@@ -294,15 +307,23 @@ public class SerlImpl {
                 }
             }
             //noinspection ALL
-            return Enum.valueOf((Class<Enum>) enumClass, readString(is));
+            return Enum.valueOf((Class<Enum>) enumClass, readString(is, ctx));
         }
 
         if (typeId == -13) {
-            String mapTypeName = readString(is);
+            String mapTypeName = readString(is, ctx);
             Constructor<?> mapType = ctx.constructorMap.get(mapTypeName);
             if (mapType == null) {
                 try {
-                    Class<?> mapClass = Class.forName(mapTypeName, true, ctx.classLoader);
+                    // initialize=false + assignability check BEFORE getConstructor()/
+                    // newInstance(): a file naming a non-Map class must be rejected
+                    // without giving it a free "run any no-arg constructor, then
+                    // fail the cast" primitive. Genuine Map implementations (juc
+                    // included, no @SerlClz needed - that is by design) still pass.
+                    Class<?> mapClass = Class.forName(mapTypeName, false, ctx.classLoader);
+                    if (!Map.class.isAssignableFrom(mapClass)) {
+                        throw new IOException("Not a map class: " + mapTypeName);
+                    }
                     mapType = mapClass.getConstructor();
                     ctx.constructorMap.put(mapTypeName, mapType);
                 } catch (ClassNotFoundException | NoSuchMethodException e) {
@@ -327,11 +348,15 @@ public class SerlImpl {
         }
 
         if (typeId == -14) {
-            String collTypeName = readString(is);
+            String collTypeName = readString(is, ctx);
             Constructor<?> collType = ctx.constructorMap.get(collTypeName);
             if (collType == null) {
                 try {
-                    Class<?> collClass = Class.forName(collTypeName, true, ctx.classLoader);
+                    // Same hardening as the map branch above.
+                    Class<?> collClass = Class.forName(collTypeName, false, ctx.classLoader);
+                    if (!Collection.class.isAssignableFrom(collClass)) {
+                        throw new IOException("Not a collection class: " + collTypeName);
+                    }
                     collType = collClass.getConstructor();
                     ctx.constructorMap.put(collTypeName, collType);
                 } catch (ClassNotFoundException | NoSuchMethodException e) {
@@ -355,17 +380,24 @@ public class SerlImpl {
         }
 
         if (typeId == -999) {
-            String className = readString(is);
+            String className = readString(is, ctx);
             try {
-                Class<?> cls = Class.forName(className, true, ctx.classLoader);
-                if (!cls.getAnnotation(SerlClz.class).annotationType().equals(SerlClz.class)) {
+                // initialize=false: the annotation gate and constructor lookup
+                // below do not require initialization; the class only gets
+                // initialized by newInstance(), i.e. after it passed the gate.
+                Class<?> cls = Class.forName(className, false, ctx.classLoader);
+                // This used to be written as
+                //   !cls.getAnnotation(SerlClz.class).annotationType().equals(SerlClz.class)
+                // which is a tautology when the annotation is present and an
+                // NPE when it is not - the intended rejection never fired.
+                if (!cls.isAnnotationPresent(SerlClz.class)) {
                     throw new IOException("Class " + className + " is not marked as safely serializable with @SerlClz");
                 }
                 Constructor<?> constructor = cls.getConstructor();
                 int fieldCount = readInt(is);
                 Field[] fields = new Field[fieldCount];
                 for (int i = 0; i < fieldCount; i++) {
-                    String fieldName = readString(is);
+                    String fieldName = readString(is, ctx);
                     assert fieldName != null;
                     try {
                         fields[i] = cls.getField(fieldName);
