@@ -1,5 +1,6 @@
 package nano.http.d2.core;
 
+import nano.http.d2.consts.Limits;
 import nano.http.d2.consts.Mime;
 import nano.http.d2.consts.Status;
 import nano.http.d2.core.ws.WebSocketServer;
@@ -32,6 +33,10 @@ public class HTTPSession implements Runnable {
 
     @Override
     public void run() {
+        // Set to true when the ownership of the socket has been handed over to
+        // another component (i.e. WebSocket), so that the finally block below
+        // won't close it from under the new owner.
+        boolean handedOff = false;
         try {
             InputStream is = mySocket.getInputStream();
             if (is == null) {
@@ -106,7 +111,7 @@ public class HTTPSession implements Runnable {
                 size = 0;
             }
 
-            if (size > 100_000_000) {
+            if (size > Limits.MAX_BODY_BYTES) {
                 sendError(Status.HTTP_BADREQUEST, "BAD REQUEST: Content length is too big.");
             }
 
@@ -129,7 +134,7 @@ public class HTTPSession implements Runnable {
             BufferedReader br = null;
             if (encoding != null) {
                 if (encoding.equalsIgnoreCase("gzip")) {
-                    br = new BufferedReader(new InputStreamReader(new GZIPInputStream(bin)));
+                    br = new BufferedReader(new InputStreamReader(new LimitedInputStream(new GZIPInputStream(bin), Limits.MAX_INFLATED_BODY_BYTES)));
                 } else {
                     sendError(Status.HTTP_BADREQUEST, "BAD REQUEST: Content encoding " + encoding + " is not supported. Expected gzip or none.");
                 }
@@ -171,9 +176,15 @@ public class HTTPSession implements Runnable {
                     // Handle application/x-www-form-urlencoded and application/json
                     StringBuilder postLine = new StringBuilder();
                     char[] pbuf = new char[512];
+                    // Track the trailing two chars of what has been read instead of
+                    // calling postLine.toString().endsWith("\r\n") on every chunk,
+                    // which copies the whole buffer each time (O(n^2) on big bodies).
+                    char trailA = 0, trailB = 0;
                     int read = br.read(pbuf);
-                    while (read >= 0 && !postLine.toString().endsWith("\r\n")) {
-                        postLine.append(String.valueOf(pbuf, 0, read));
+                    while (read > 0 && !(trailA == '\r' && trailB == '\n')) {
+                        postLine.append(pbuf, 0, read);
+                        trailA = read > 1 ? pbuf[read - 2] : trailB;
+                        trailB = pbuf[read - 1];
                         read = br.read(pbuf);
                     }
                     ParmsDecoder.decodeParms(postLine.toString().trim(), parms);
@@ -181,6 +192,7 @@ public class HTTPSession implements Runnable {
             }
 
             if (WebSocketServer.checkWsProtocol(header, method, mySocket, parms, uri)) {
+                handedOff = true;
                 return;
             }
 
@@ -195,7 +207,6 @@ public class HTTPSession implements Runnable {
                 sendResponse(r.status, r.mimeType, r.header, r.data);
             }
             br.close();
-            mySocket.close();
         } catch (IOException ioe) {
             try {
                 sendError(Status.HTTP_INTERNALERROR, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
@@ -203,6 +214,16 @@ public class HTTPSession implements Runnable {
             }
         } catch (InterruptedException ie) {
             // Thrown by sendError, ignore and exit the thread.
+        } finally {
+            // Safety net: whatever escapes above (NPE / AIOOBE / IAE / ...),
+            // never leak the socket. Socket.close() is idempotent, so double
+            // closes after sendResponse are fine.
+            if (!handedOff) {
+                try {
+                    mySocket.close();
+                } catch (Exception ignored) {
+                }
+            }
         }
     }
 
@@ -471,6 +492,45 @@ public class HTTPSession implements Runnable {
                 mySocket.close();
             } catch (Exception ignored) {
             }
+        }
+    }
+
+    /**
+     * Counting stream that caps the decompressed size of gzipped request
+     * bodies. Content-Length only bounds the compressed bytes, so without
+     * this a ~100KB request could inflate into gigabytes of heap.
+     * The IOException thrown here surfaces as a normal IO error in run().
+     */
+    private static class LimitedInputStream extends FilterInputStream {
+        private final long limit;
+        private long count = 0;
+
+        LimitedInputStream(InputStream in, long limit) {
+            super(in);
+            this.limit = limit;
+        }
+
+        private void account(int read) throws IOException {
+            if (read > 0) {
+                count += read;
+                if (count > limit) {
+                    throw new IOException("Decompressed request body exceeds the limit: " + limit + " bytes.");
+                }
+            }
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            int r = super.read(b, off, len);
+            account(r);
+            return r;
+        }
+
+        @Override
+        public int read() throws IOException {
+            int r = super.read();
+            account(r);
+            return r;
         }
     }
 }

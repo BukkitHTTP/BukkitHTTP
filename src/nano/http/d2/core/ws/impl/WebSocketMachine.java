@@ -1,5 +1,7 @@
 package nano.http.d2.core.ws.impl;
 
+import nano.http.d2.consts.Limits;
+
 import java.io.ByteArrayOutputStream;
 
 public class WebSocketMachine {
@@ -93,6 +95,13 @@ public class WebSocketMachine {
         ptr3 = 0;
         ptr4 = 0;
         ptr5 = 0;
+        // Anti fragment-bomb: single frames are capped at 2MB in update5(),
+        // but the accumulated message used to be unbounded.
+        // The RuntimeException propagates out of update() and the caller
+        // (WebSocket.run()) closes the connection on it.
+        if (baos.size() + payloadData.length > Limits.MAX_WS_MESSAGE_BYTES) {
+            throw new RuntimeException("WebSocket message too large (fragmented)");
+        }
         try {
             baos.write(payloadData);
         } catch (Exception ignored) {

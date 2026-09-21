@@ -7,7 +7,6 @@ import nano.http.d2.core.Response;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unused")
@@ -60,12 +59,11 @@ public class SessionManager {
         if (random.nextInt(1000) != 0) {
             return;
         }
-        Set<String> entries = sessions.keySet();
-        for (String entry : entries) {
-            if (System.currentTimeMillis() - sessions.get(entry).lastAccess > 3600000L) { //1 hour
-                sessions.remove(entry);
-            }
-        }
+        // entrySet().removeIf() judges and removes each entry atomically.
+        // The old keySet() loop could race with a concurrent gc()/put and
+        // make sessions.get(entry) return null mid-iteration -> NPE.
+        sessions.entrySet().removeIf(e ->
+                System.currentTimeMillis() - e.getValue().lastAccess > 3600000L); //1 hour
     }
 
     public static Session getOrCreateSession(String sessionValue) {

@@ -8,6 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 
 public class Logger {
+    // SimpleDateFormat and OutputStreamWriter are not thread-safe, and log
+    // calls come from every request thread. Serialize the writes; stdout's
+    // println is internally synchronized already, so it stays outside the lock.
+    private static final Object LOCK = new Object();
     private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final boolean release = false;
     private static OutputStreamWriter osw;
@@ -28,50 +32,60 @@ public class Logger {
             Runtime.getRuntime().addShutdownHook(new Thread(Logger::flush));
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("[FATAL] Can not init Log5j.");
+            System.out.println("[FATAL] Can't init Log5j.");
             System.exit(-1);
         }
     }
 
     public static void info(String str) {
         System.out.println("[INFO] " + str);
-        try {
-            osw.write("[" + simpleDateFormat.format(System.currentTimeMillis()) + "] [INFO] ");
-            osw.write(str);
-            osw.write("\n");
-        } catch (Exception ignored) {
+        synchronized (LOCK) {
+            try {
+                osw.write("[" + simpleDateFormat.format(System.currentTimeMillis()) + "] [INFO] ");
+                osw.write(str);
+                osw.write("\n");
+            } catch (Exception ignored) {
+            }
         }
     }
 
     public static void warning(String str) {
         System.err.println("[WARNING] " + str);
-        try {
-            osw.write("[" + simpleDateFormat.format(System.currentTimeMillis()) + "] [WARNING] ");
-            osw.write(str);
-            osw.write("\n");
-        } catch (Exception ignored) {
+        synchronized (LOCK) {
+            try {
+                osw.write("[" + simpleDateFormat.format(System.currentTimeMillis()) + "] [WARNING] ");
+                osw.write(str);
+                osw.write("\n");
+            } catch (Exception ignored) {
+            }
         }
     }
 
     public static void error(String str) {
         System.err.println("[ERROR] " + str);
-        try {
-            osw.write("[" + simpleDateFormat.format(System.currentTimeMillis()) + "] [ERROR] ");
-            osw.write(str);
-            osw.write("\n");
-        } catch (Exception ignored) {
+        synchronized (LOCK) {
+            try {
+                osw.write("[" + simpleDateFormat.format(System.currentTimeMillis()) + "] [ERROR] ");
+                osw.write(str);
+                osw.write("\n");
+            } catch (Exception ignored) {
+            }
         }
     }
 
     public static void error(String str, Throwable e) {
         System.err.println("[ERROR] " + str);
         e.printStackTrace();
-        try {
-            osw.write("[" + simpleDateFormat.format(System.currentTimeMillis()) + "] [ERROR] ");
-            osw.write(str);
-            osw.write("\n");
-            e.printStackTrace(new PrintWriter(osw));
-        } catch (Exception ignored) {
+        synchronized (LOCK) {
+            try {
+                osw.write("[" + simpleDateFormat.format(System.currentTimeMillis()) + "] [ERROR] ");
+                osw.write(str);
+                osw.write("\n");
+                PrintWriter pw = new PrintWriter(osw);
+                e.printStackTrace(pw);
+                pw.flush();
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -80,18 +94,22 @@ public class Logger {
             return;
         }
         System.out.println("[DEBUG] " + str);
-        try {
-            osw.write("[" + simpleDateFormat.format(System.currentTimeMillis()) + "] [DEBUG] ");
-            osw.write(str);
-            osw.write("\n");
-        } catch (Exception ignored) {
+        synchronized (LOCK) {
+            try {
+                osw.write("[" + simpleDateFormat.format(System.currentTimeMillis()) + "] [DEBUG] ");
+                osw.write(str);
+                osw.write("\n");
+            } catch (Exception ignored) {
+            }
         }
     }
 
     public static void flush() {
-        try {
-            osw.flush();
-        } catch (Exception ignored) {
+        synchronized (LOCK) {
+            try {
+                osw.flush();
+            } catch (Exception ignored) {
+            }
         }
     }
 }

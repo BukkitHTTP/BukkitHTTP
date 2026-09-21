@@ -5,53 +5,55 @@ import nano.http.d2.hooks.interfaces.SocketHookProvider;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultSock implements SocketHookProvider {
-    static final Map<String, Conn> map = new HashMap<>();
+    // NOTE: strike() is called from request threads while Accept() is called
+    // from the accept thread, so this shared map must be concurrent, and the
+    // read-modify-write sequences must be atomic (compute()).
+    static final Map<String, Conn> map = new ConcurrentHashMap<>();
+    // Only touched from the (single) accept thread inside Accept(), plain map is fine.
     private final Map<String, Conn> blackList = new HashMap<>();
 
     public static void strike(String ip, int weight) {
-        if (!map.containsKey(ip)) {
-            map.put(ip, new Conn());
-        }
-        Conn conn = map.get(ip);
-        if (conn.expire < System.currentTimeMillis()) {
-            conn = new Conn();
-        }
-        conn.count += weight;
-        map.put(ip, conn);
+        map.compute(ip, (k, conn) -> {
+            if (conn == null || conn.expire < System.currentTimeMillis()) {
+                conn = new Conn();
+            }
+            conn.count += weight;
+            return conn;
+        });
     }
 
     @Override
     public boolean Accept(String ip) {
-        if (blackList.containsKey(ip)) {
-            Conn conn = blackList.get(ip);
-            if (conn.expire < System.currentTimeMillis()) {
+        long now = System.currentTimeMillis();
+        Conn blocked = blackList.get(ip);
+        if (blocked != null) {
+            if (blocked.expire < now) {
                 blackList.remove(ip);
                 Logger.warning("IP " + ip + " has been unblocked by the NanoFirewall.");
                 return true;
             }
             return false;
         }
-        if (!map.containsKey(ip)) {
-            map.put(ip, new Conn());
-        }
-        Conn conn = map.get(ip);
-        if (conn.expire < System.currentTimeMillis()) {
-            map.remove(ip);
-            return true;
-        }
-        conn.count++;
-        if (conn.count > 25) {
-            Logger.warning("IP " + ip + " has been blocked by the NanoFirewall.");
-            map.remove(ip);
-            Conn block = new Conn();
-            block.expire = System.currentTimeMillis() + 2 * 60 * 60 * 1000L;   // 2 hours
-            blackList.put(ip, block);
-            return false;
-        }
-        map.put(ip, conn);
-        return true;
+        boolean[] accept = {false};
+        map.compute(ip, (k, conn) -> {
+            if (conn == null || conn.expire < now) {
+                conn = new Conn();
+            }
+            conn.count++;
+            if (conn.count > 25) {
+                Logger.warning("IP " + ip + " has been blocked by the NanoFirewall.");
+                Conn block = new Conn();
+                block.expire = now + 2 * 60 * 60 * 1000L;   // 2 hours
+                blackList.put(ip, block);
+                return null; // remove from map
+            }
+            accept[0] = true;
+            return conn;
+        });
+        return accept[0];
     }
 }
 
